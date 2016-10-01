@@ -1,0 +1,6 @@
+/target/
+/.settings/
+/.vertx/
+/.classpath
+/.factorypath
+/.project
