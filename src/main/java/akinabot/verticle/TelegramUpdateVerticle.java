@@ -3,11 +3,12 @@ package akinabot.verticle;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.inject.Inject;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.pengrad.telegrambot.TelegramBot;
-import com.pengrad.telegrambot.TelegramBotAdapter;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.GetUpdates;
 import com.pengrad.telegrambot.response.GetUpdatesResponse;
@@ -24,7 +25,8 @@ public class TelegramUpdateVerticle extends AbstractVerticle {
 	private static final int DEFAULT_UPDATE_INTERVAL = 500;
 	private static final int DEFAULT_UPDATE__LIMIT = 100;
 
-	private TelegramBot telegramBot;
+	@Inject TelegramBot telegramBot;
+	
 	private int updateInterval;
 	private int updateLimit;
 	private final AtomicInteger offset = new AtomicInteger();
@@ -37,7 +39,6 @@ public class TelegramUpdateVerticle extends AbstractVerticle {
 
 		this.updateInterval = config().getInteger("bot.update_interval", DEFAULT_UPDATE_INTERVAL);
 		this.updateLimit = config().getInteger("bot.update_limit", DEFAULT_UPDATE__LIMIT);
-		this.telegramBot = TelegramBotAdapter.build(config().getString("bot.token"));
 		
 		// get updates on server periodically
 		vertx.setPeriodic(updateInterval, s -> {

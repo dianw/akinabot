@@ -3,11 +3,12 @@ package akinabot.verticle;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import javax.inject.Inject;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.pengrad.telegrambot.TelegramBot;
-import com.pengrad.telegrambot.TelegramBotAdapter;
 import com.pengrad.telegrambot.model.request.Keyboard;
 import com.pengrad.telegrambot.model.request.KeyboardButton;
 import com.pengrad.telegrambot.model.request.ReplyKeyboardMarkup;
@@ -31,13 +32,11 @@ public class MessageSenderVerticle extends AbstractVerticle {
 	private static final String TEXT_PROBLEM = "Sorry, we got a problem";
 	private static final String TEXT_RESULT = "Your character is ";
 
-	private EventBus eventBus;
-	private TelegramBot telegramBot;
+	@Inject TelegramBot telegramBot;
 
 	@Override
 	public void start() throws Exception {
-		this.eventBus = vertx.eventBus();
-		this.telegramBot = TelegramBotAdapter.build(config().getString("bot.token"));
+		EventBus eventBus = vertx.eventBus();
 		
 		eventBus.consumer(Akinabot.BUS_BOT_GREETINGS, this::sendGreetins);
 		eventBus.consumer(Akinabot.BUS_BOT_IQUESTION, this::sendPreviousQuestion);

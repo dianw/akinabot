@@ -1,6 +1,7 @@
 package akinabot;
 
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.google.inject.Injector;
 import com.pengrad.telegrambot.model.Update;
 
 import akinabot.model.bot.QuestionAnswer;
@@ -9,8 +10,8 @@ import akinabot.verticle.QuestionAnswerVerticle;
 import akinabot.verticle.TelegramUpdateVerticle;
 import akinabot.verticle.codec.QuestionAnswerCodec;
 import akinabot.verticle.codec.UpdateCodec;
+import akinabot.verticle.di.InjectorVerticleFactory;
 import io.vertx.core.AbstractVerticle;
-import io.vertx.core.DeploymentOptions;
 import io.vertx.core.json.Json;
 
 public class Akinabot extends AbstractVerticle {
@@ -31,13 +32,17 @@ public class Akinabot extends AbstractVerticle {
 	@Override
 	public void start() throws Exception {
 		Json.mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
-
+		InjectorVerticleFactory injectorVerticleFactory = new InjectorVerticleFactory();
+		
+		vertx.registerVerticleFactory(injectorVerticleFactory);
+		Injector injector = injectorVerticleFactory.getInjector();
+		
 		vertx.eventBus()
-				.registerDefaultCodec(Update.class, new UpdateCodec())
-				.registerDefaultCodec(QuestionAnswer.class, new QuestionAnswerCodec());
+				.registerDefaultCodec(QuestionAnswer.class, injector.getInstance(QuestionAnswerCodec.class))
+				.registerDefaultCodec(Update.class, injector.getInstance(UpdateCodec.class));
 
-		vertx.deployVerticle(TelegramUpdateVerticle.class.getName(), new DeploymentOptions().setConfig(config()));
-		vertx.deployVerticle(QuestionAnswerVerticle.class.getName(), new DeploymentOptions().setConfig(config()));
-		vertx.deployVerticle(MessageSenderVerticle.class.getName(), new DeploymentOptions().setConfig(config()));
+		vertx.deployVerticle("java-inject:" + TelegramUpdateVerticle.class.getName());
+		vertx.deployVerticle(QuestionAnswerVerticle.class.getName());
+		vertx.deployVerticle("java-inject:" + MessageSenderVerticle.class.getName());
 	}
 }

@@ -18,10 +18,13 @@ import akinabot.model.bot.QuestionAnswer;
 import akinabot.service.AkinatorApiService;
 import akinabot.service.AkinatorApiService.InvalidAnswerException;
 import akinabot.service.AkinatorApiService.ResultNotOkException;
+import akinabot.verticle.codec.QuestionAnswerCodec;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.EventBus;
+import io.vertx.core.shareddata.LocalMap;
 
 public class QuestionAnswerVerticle extends AbstractVerticle {
 	private final Logger log = LoggerFactory.getLogger(getClass());
@@ -29,12 +32,15 @@ public class QuestionAnswerVerticle extends AbstractVerticle {
 	private AkinatorApiService akinatorApiService;
 	private EventBus eventBus;
 	private ConcurrentHashMap<Long, List<QuestionAnswer>> sessions = new ConcurrentHashMap<>();
-
+	private LocalMap<Long, Buffer> mapSessions;
+	private QuestionAnswerCodec qnaCodec = new QuestionAnswerCodec();
+	
 	@Override
 	public void start() throws Exception {
 		this.akinatorApiService = new AkinatorApiService(vertx.createHttpClient());
 		this.eventBus = vertx.eventBus();
-		
+		this.mapSessions = vertx.sharedData().getLocalMap("sessions");
+
 		vertx.eventBus().consumer(Akinabot.BUS_BOT_UPDATE, this::onUpdate);
 	}
 
