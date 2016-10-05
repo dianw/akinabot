@@ -1,7 +1,5 @@
 package akinabot.verticle.codec;
 
-import javax.inject.Inject;
-
 import org.nustaq.serialization.FSTConfiguration;
 
 import com.pengrad.telegrambot.model.Update;
@@ -10,7 +8,11 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.MessageCodec;
 
 public class UpdateCodec implements MessageCodec<Update, Update> {
-	@Inject FSTConfiguration conf = FSTConfiguration.createDefaultConfiguration();
+	private FSTConfiguration conf;
+
+	public UpdateCodec(FSTConfiguration conf) {
+		this.conf = conf;
+	}
 
 	@Override
 	public void encodeToWire(Buffer buffer, Update s) {

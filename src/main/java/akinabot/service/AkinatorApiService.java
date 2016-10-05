@@ -85,6 +85,10 @@ public class AkinatorApiService {
 		}).end();
 	}
 
+	public void setHttpClient(HttpClient httpClient) {
+		this.httpClient = httpClient;
+	}
+
 	@SuppressWarnings("serial")
 	public static class ResultNotOkException extends RuntimeException {
 	}

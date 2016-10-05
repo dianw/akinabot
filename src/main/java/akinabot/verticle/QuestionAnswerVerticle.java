@@ -6,6 +6,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.Update;
@@ -22,24 +23,29 @@ import akinabot.verticle.codec.QuestionAnswerCodec;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
-import io.vertx.core.buffer.Buffer;
+import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.EventBus;
-import io.vertx.core.shareddata.LocalMap;
+import io.vertx.core.http.HttpClientOptions;
 
+@Component
 public class QuestionAnswerVerticle extends AbstractVerticle {
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	private AkinatorApiService akinatorApiService;
-	private EventBus eventBus;
 	private ConcurrentHashMap<Long, List<QuestionAnswer>> sessions = new ConcurrentHashMap<>();
-	private LocalMap<Long, Buffer> mapSessions;
-	private QuestionAnswerCodec qnaCodec = new QuestionAnswerCodec();
+	private EventBus eventBus;
+	
+	private final DeliveryOptions qnaDeliveryOptions = new DeliveryOptions()
+			.setCodecName(QuestionAnswerCodec.class.getName());
 	
 	@Override
 	public void start() throws Exception {
-		this.akinatorApiService = new AkinatorApiService(vertx.createHttpClient());
+		HttpClientOptions httpClientOptions = new HttpClientOptions()
+				.setMaxPoolSize(20)
+				.setHttp2MaxPoolSize(20);
+		
+		this.akinatorApiService = new AkinatorApiService(vertx.createHttpClient(httpClientOptions));
 		this.eventBus = vertx.eventBus();
-		this.mapSessions = vertx.sharedData().getLocalMap("sessions");
 
 		vertx.eventBus().consumer(Akinabot.BUS_BOT_UPDATE, this::onUpdate);
 	}
@@ -64,7 +70,7 @@ public class QuestionAnswerVerticle extends AbstractVerticle {
 			qnas.add(qna);
 			log.info("[{}] NEW SESSION", chatId);
 
-			eventBus.send(Akinabot.BUS_BOT_GREETINGS, qna);
+			eventBus.send(Akinabot.BUS_BOT_GREETINGS, qna, qnaDeliveryOptions);
 			return;
 		}
 
@@ -83,7 +89,7 @@ public class QuestionAnswerVerticle extends AbstractVerticle {
 
 				log.info("[{}] QUIT SESSION", chatId);
 
-				eventBus.send(Akinabot.BUS_BOT_GREETINGS, qna);
+				eventBus.send(Akinabot.BUS_BOT_GREETINGS, qna, qnaDeliveryOptions);
 				return;
 			}
 		}
@@ -93,7 +99,9 @@ public class QuestionAnswerVerticle extends AbstractVerticle {
 			Future<NewSessionParameters> future = Future.future();
 			future.setHandler(h -> {
 				if (isResultNotOk(h)) {
-					eventBus.send(Akinabot.BUS_BOT_SORRY, qna);
+					log.error("[{}] Failed opening session, result is not OK", chatId, h.cause());
+					
+					eventBus.send(Akinabot.BUS_BOT_SORRY, qna, qnaDeliveryOptions);
 					return;
 				}
 
@@ -113,12 +121,16 @@ public class QuestionAnswerVerticle extends AbstractVerticle {
 			Future<StepInformation> future = Future.future();
 			future.setHandler(h -> {
 				if (isResultNotOk(h)) {
-					eventBus.send(Akinabot.BUS_BOT_SORRY, qna);
+					log.error("[{}] Failed sending answer, result not OK", chatId, h.cause());
+
+					eventBus.send(Akinabot.BUS_BOT_SORRY, qna, qnaDeliveryOptions);
 					return;
 				}
 
 				if (h.failed() && h.cause() instanceof InvalidAnswerException) {
-					eventBus.send(Akinabot.BUS_BOT_IQUESTION, qna);
+					log.error("[{}] Invalid answer", chatId, h.cause());
+					
+					eventBus.send(Akinabot.BUS_BOT_IQUESTION, qna, qnaDeliveryOptions);
 					return;
 				}
 
@@ -143,13 +155,13 @@ public class QuestionAnswerVerticle extends AbstractVerticle {
 			Future<ListParameters> future = Future.future();
 			future.setHandler(h -> {
 				qna.setResult(h.result());
-				eventBus.send(Akinabot.BUS_BOT_RESULT, qna);
+				eventBus.send(Akinabot.BUS_BOT_RESULT, qna, qnaDeliveryOptions);
 				qnas.clear();
 			});
 
 			akinatorApiService.getResult(qna.getChatId(), qna.getIdentification(), qna.getStepInformation(), future.completer());
 		} else {
-			eventBus.send(Akinabot.BUS_BOT_QUESTION, qna);
+			eventBus.send(Akinabot.BUS_BOT_QUESTION, qna, qnaDeliveryOptions);
 		}
 	}
 

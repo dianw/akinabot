@@ -1,33 +1,28 @@
 package akinabot.verticle.di;
 
-import javax.inject.Singleton;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.inject.AbstractModule;
-import com.google.inject.Provides;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
 import io.vertx.core.Vertx;
+import io.vertx.core.eventbus.EventBus;
 
-public class VertxModule extends AbstractModule {
+@Configuration
+public class VertxModule {
 	private final Logger log = LoggerFactory.getLogger(getClass());
-	
-	private Vertx vertx;
 
-	public VertxModule(Vertx vertx) {
-		this.vertx = vertx;
-	}
-
-	@Provides
-	@Singleton
+	@Bean
 	public Vertx vertx() {
-		log.info("Providing Vertx instance");
-
-		return vertx;
+		log.info("Configuring Vertx instance");
+		
+		return Vertx.vertx();
 	}
 
-	@Override
-	protected void configure() {
+	@Bean
+	public EventBus eventBus(Vertx vertx) {
+		log.info("Configuring Vertx EventBus");
+
+		return vertx.eventBus();
 	}
 }

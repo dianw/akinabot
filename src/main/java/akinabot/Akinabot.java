@@ -1,20 +1,23 @@
 package akinabot;
 
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.google.inject.Injector;
-import com.pengrad.telegrambot.model.Update;
+import java.util.List;
 
-import akinabot.model.bot.QuestionAnswer;
-import akinabot.verticle.MessageSenderVerticle;
-import akinabot.verticle.QuestionAnswerVerticle;
-import akinabot.verticle.TelegramUpdateVerticle;
-import akinabot.verticle.codec.QuestionAnswerCodec;
-import akinabot.verticle.codec.UpdateCodec;
-import akinabot.verticle.di.InjectorVerticleFactory;
-import io.vertx.core.AbstractVerticle;
-import io.vertx.core.json.Json;
+import javax.inject.Inject;
 
-public class Akinabot extends AbstractVerticle {
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+import io.vertx.core.Verticle;
+import io.vertx.core.Vertx;
+import io.vertx.core.eventbus.EventBus;
+import io.vertx.core.eventbus.MessageCodec;
+
+@SpringBootApplication
+public class Akinabot {
+	private final Logger log = LoggerFactory.getLogger(getClass());
+	
 	public static final String AKINATOR_API_URL = "http://api-en4.akinator.com";
 
 	public static final String BUS_BOT_GREETINGS = "bot.greetings";
@@ -29,20 +32,21 @@ public class Akinabot extends AbstractVerticle {
 	public static final String BUTTON_QUIT = "Quit";
 	public static final String BUTTON_START = "/start";
 
-	@Override
-	public void start() throws Exception {
-		Json.mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
-		InjectorVerticleFactory injectorVerticleFactory = new InjectorVerticleFactory();
-		
-		vertx.registerVerticleFactory(injectorVerticleFactory);
-		Injector injector = injectorVerticleFactory.getInjector();
-		
-		vertx.eventBus()
-				.registerDefaultCodec(QuestionAnswer.class, injector.getInstance(QuestionAnswerCodec.class))
-				.registerDefaultCodec(Update.class, injector.getInstance(UpdateCodec.class));
+	public static void main(String[] args) {
+		SpringApplication.run(Akinabot.class, args);
+	}
 
-		vertx.deployVerticle("java-inject:" + TelegramUpdateVerticle.class.getName());
-		vertx.deployVerticle(QuestionAnswerVerticle.class.getName());
-		vertx.deployVerticle("java-inject:" + MessageSenderVerticle.class.getName());
+	@Inject
+	protected void deployVerticles(Vertx vertx, List<Verticle> verticles) {
+		log.info("Deploying verticles");
+		verticles.forEach(vertx::deployVerticle);
+		log.info("Verticles deployed");
+	}
+
+	@Inject
+	protected void configureMessageCodecs(EventBus eventBus, List<MessageCodec> codecs) {
+		log.info("Registering codecs");
+		codecs.forEach(eventBus::registerCodec);
+		log.info("Codecs registered");
 	}
 }

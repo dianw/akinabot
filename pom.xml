@@ -27,16 +27,23 @@
 			<version>3.3.3</version>
 		</dependency>
 
+		<!-- Serialization -->
 		<dependency>
 			<groupId>de.ruedigermoeller</groupId>
 			<artifactId>fst</artifactId>
 			<version>2.48</version>
 		</dependency>
 
+		<!-- Dependency Injection -->
 		<dependency>
-			<groupId>com.google.inject</groupId>
-			<artifactId>guice</artifactId>
-			<version>4.1.0</version>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter</artifactId>
+			<version>1.4.1.RELEASE</version>
+		</dependency>
+		<dependency>
+			<groupId>javax.inject</groupId>
+			<artifactId>javax.inject</artifactId>
+			<version>1</version>
 		</dependency>
 	</dependencies>
 
@@ -52,50 +59,16 @@
 				</configuration>
 			</plugin>
 			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-shade-plugin</artifactId>
-				<version>2.4.3</version>
-				<configuration>
-					<transformers>
-						<transformer
-							implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-							<manifestEntries>
-								<Main-Class>io.vertx.core.Launcher</Main-Class>
-								<Main-Verticle>akinabot.Akinabot</Main-Verticle>
-							</manifestEntries>
-						</transformer>
-					</transformers>
-					<finalName>${project.artifactId}-${project.version}-fat</finalName>
-				</configuration>
-				<executions>
-					<execution>
-						<phase>package</phase>
-						<goals>
-							<goal>shade</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>exec-maven-plugin</artifactId>
-				<version>1.5.0</version>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<version>1.4.1.RELEASE</version>
 				<executions>
 					<execution>
 						<goals>
-							<goal>java</goal>
+							<goal>repackage</goal>
 						</goals>
 					</execution>
 				</executions>
-				<configuration>
-					<mainClass>io.vertx.core.Launcher</mainClass>
-					<arguments>
-						<argument>run</argument>
-						<argument>akinabot.Akinabot</argument>
-						<argument>-conf</argument>
-						<argument>src/main/resources/dev.json</argument>
-					</arguments>
-				</configuration>
 			</plugin>
 		</plugins>
 	</build>

@@ -1,15 +1,17 @@
 package akinabot.verticle.codec;
 
-import javax.inject.Inject;
-
 import org.nustaq.serialization.FSTConfiguration;
 
 import akinabot.model.bot.QuestionAnswer;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.eventbus.MessageCodec;
 
-public class QuestionAnswerCodec implements MessageCodec<QuestionAnswer, QuestionAnswer>{
-	@Inject FSTConfiguration conf = FSTConfiguration.createDefaultConfiguration();
+public class QuestionAnswerCodec implements MessageCodec<QuestionAnswer, QuestionAnswer> {
+	private FSTConfiguration conf;
+
+	public QuestionAnswerCodec(FSTConfiguration conf) {
+		this.conf = conf;
+	}
 	
 	@Override
 	public void encodeToWire(Buffer buffer, QuestionAnswer s) {

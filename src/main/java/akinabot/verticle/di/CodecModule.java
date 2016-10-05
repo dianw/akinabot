@@ -1,22 +1,29 @@
 package akinabot.verticle.di;
 
+import org.nustaq.serialization.FSTConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.inject.AbstractModule;
-import com.google.inject.Scopes;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
 import akinabot.verticle.codec.QuestionAnswerCodec;
 import akinabot.verticle.codec.UpdateCodec;
 
-public class CodecModule extends AbstractModule {
+@Configuration
+public class CodecModule {
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
-	@Override
-	protected void configure() {
-		log.info("Configuring codecs");
+	@Bean
+	public QuestionAnswerCodec questionAnswerCodec(FSTConfiguration conf) {
+		log.info("Configuring codec: {}", QuestionAnswerCodec.class.getName());
 
-		bind(QuestionAnswerCodec.class).in(Scopes.SINGLETON);
-		bind(UpdateCodec.class).in(Scopes.SINGLETON);
+		return new QuestionAnswerCodec(conf);
+	}
+
+	@Bean
+	public UpdateCodec updateCodec(FSTConfiguration conf) {
+		log.info("Configuring codec: {}", UpdateCodec.class.getName());
+
+		return new UpdateCodec(conf);
 	}
 }
