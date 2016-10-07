@@ -7,6 +7,7 @@ import javax.inject.Inject;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import com.pengrad.telegrambot.TelegramBot;
@@ -23,6 +24,7 @@ import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.EventBus;
 
 @Component
+@Profile("longpoll")
 public class TelegramUpdateVerticle extends AbstractVerticle {
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
