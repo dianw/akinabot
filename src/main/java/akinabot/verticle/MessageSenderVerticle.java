@@ -36,7 +36,7 @@ public class MessageSenderVerticle extends AbstractVerticle {
 	private static final String TEXT_GREETINGS = "Think about a real or fictional character , I will try to guess who it is.";
 	private static final String TEXT_PROBLEM = "Sorry, we got a problem";
 	private static final String TEXT_RESULT = "Your character is ";
-	private static final String TEXT_TYPING = "Typing...";
+	private static final String TEXT_TYPING = "typing";
 
 	private TelegramBot telegramBot;
 

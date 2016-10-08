@@ -12,6 +12,7 @@ import com.pengrad.telegrambot.BotUtils;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.SetWebhook;
+import com.pengrad.telegrambot.response.BaseResponse;
 
 import akinabot.Akinabot;
 import akinabot.verticle.codec.UpdateCodec;
@@ -26,11 +27,11 @@ public class TelegramWebhookUpdateVerticle extends AbstractVerticle {
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	private Environment env;
-	private TelegramBot bot;
+	private TelegramBot telegramBot;
 
 	@Inject
-	public TelegramWebhookUpdateVerticle(TelegramBot bot, Environment env) {
-		this.bot = bot;
+	public TelegramWebhookUpdateVerticle(TelegramBot telegramBot, Environment env) {
+		this.telegramBot = telegramBot;
 		this.env = env;
 	}
 
@@ -42,8 +43,16 @@ public class TelegramWebhookUpdateVerticle extends AbstractVerticle {
 		httpServer.requestHandler(request -> {
 			log.debug("Incoming webhook update");
 			
+			if ("/".equals(request.uri()) || "/ping".equals(request.uri())) {
+				request.response().end("success");
+
+				return;
+			}
+
 			request.bodyHandler(body -> {
 				Update update = BotUtils.parseUpdate(body.toString());
+				log.debug("Update ID: {}", update.updateId());
+
 				eventBus.publish(Akinabot.BUS_BOT_UPDATE, update,
 						new DeliveryOptions().setCodecName(UpdateCodec.class.getName()));
 			});
@@ -57,9 +66,16 @@ public class TelegramWebhookUpdateVerticle extends AbstractVerticle {
 	}
 
 	private void setWebhook() {
-		vertx.executeBlocking(handler -> {
-			bot.execute(new SetWebhook().url(env.getProperty("telegram.bot.webhook_url", "")));
+		vertx.<BaseResponse>executeBlocking(handler -> {
+			log.info("Setting webhook url");
+			handler.complete(telegramBot.execute(new SetWebhook().url(env.getProperty("telegram.bot.webhook_url", ""))));
 		}, result -> {
+			BaseResponse response = result.result();
+			if (response.isOk()) {
+				log.info("Setting webhook url completed");
+			} else {
+				log.error("Failed setting webhook: {}", response.description());
+			}
 		});
 	}
 }
