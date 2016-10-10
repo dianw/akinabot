@@ -43,14 +43,17 @@ public class TelegramWebhookUpdateVerticle extends AbstractVerticle {
 		httpServer.requestHandler(request -> {
 			log.debug("Incoming webhook update");
 			
-			if ("/".equals(request.uri()) || "/ping".equals(request.uri())) {
+			if (!"/bot".equals(request.uri()) || "/ping".equals(request.uri())) {
 				request.response().end("success");
 
 				return;
 			}
 
 			request.bodyHandler(body -> {
-				Update update = BotUtils.parseUpdate(body.toString());
+				String bodyString = body.toString();
+				log.debug("Webhook body: {}", bodyString);
+
+				Update update = BotUtils.parseUpdate(bodyString);
 				log.debug("Update ID: {}", update.updateId());
 
 				eventBus.publish(Akinabot.BUS_BOT_UPDATE, update,
