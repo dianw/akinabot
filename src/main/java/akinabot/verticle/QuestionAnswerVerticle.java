@@ -70,7 +70,7 @@ public class QuestionAnswerVerticle extends AbstractVerticle {
 			qnas.add(qna);
 			log.info("[{}] NEW SESSION", chatId);
 
-			eventBus.send(Akinabot.BUS_BOT_GREETINGS, qna, qnaDeliveryOptions);
+			eventBus.publish(Akinabot.BUS_BOT_GREETINGS, qna, qnaDeliveryOptions);
 			return;
 		}
 
@@ -89,7 +89,7 @@ public class QuestionAnswerVerticle extends AbstractVerticle {
 
 				log.info("[{}] QUIT SESSION", chatId);
 
-				eventBus.send(Akinabot.BUS_BOT_GREETINGS, qna, qnaDeliveryOptions);
+				eventBus.publish(Akinabot.BUS_BOT_GREETINGS, qna, qnaDeliveryOptions);
 				return;
 			}
 		}
@@ -101,7 +101,7 @@ public class QuestionAnswerVerticle extends AbstractVerticle {
 				if (isResultNotOk(h)) {
 					log.error("[{}] Failed opening session, result is not OK", chatId, h.cause());
 					
-					eventBus.send(Akinabot.BUS_BOT_SORRY, qna, qnaDeliveryOptions);
+					eventBus.publish(Akinabot.BUS_BOT_SORRY, qna, qnaDeliveryOptions);
 					return;
 				}
 
@@ -123,14 +123,14 @@ public class QuestionAnswerVerticle extends AbstractVerticle {
 				if (isResultNotOk(h)) {
 					log.error("[{}] Failed sending answer, result not OK", chatId, h.cause());
 
-					eventBus.send(Akinabot.BUS_BOT_SORRY, qna, qnaDeliveryOptions);
+					eventBus.publish(Akinabot.BUS_BOT_SORRY, qna, qnaDeliveryOptions);
 					return;
 				}
 
 				if (h.failed() && h.cause() instanceof InvalidAnswerException) {
 					log.error("[{}] Invalid answer", chatId, h.cause());
 					
-					eventBus.send(Akinabot.BUS_BOT_IQUESTION, qna, qnaDeliveryOptions);
+					eventBus.publish(Akinabot.BUS_BOT_IQUESTION, qna, qnaDeliveryOptions);
 					return;
 				}
 
@@ -155,13 +155,13 @@ public class QuestionAnswerVerticle extends AbstractVerticle {
 			Future<ListParameters> future = Future.future();
 			future.setHandler(h -> {
 				qna.setResult(h.result());
-				eventBus.send(Akinabot.BUS_BOT_RESULT, qna, qnaDeliveryOptions);
+				eventBus.publish(Akinabot.BUS_BOT_RESULT, qna, qnaDeliveryOptions);
 				qnas.clear();
 			});
 
 			akinatorApiService.getResult(qna.getChatId(), qna.getIdentification(), qna.getStepInformation(), future.completer());
 		} else {
-			eventBus.send(Akinabot.BUS_BOT_QUESTION, qna, qnaDeliveryOptions);
+			eventBus.publish(Akinabot.BUS_BOT_QUESTION, qna, qnaDeliveryOptions);
 		}
 	}
 

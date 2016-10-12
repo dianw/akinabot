@@ -8,6 +8,7 @@ import akinabot.model.akinator.StepInformation;
 
 public class QuestionAnswer {
 	private Long chatId;
+	private int qaStep = 0;
 	private Identification identification;
 	private Message answer;
 	private QuestionAnswer question;
@@ -20,6 +21,14 @@ public class QuestionAnswer {
 
 	public void setChatId(Long chatId) {
 		this.chatId = chatId;
+	}
+
+	public int getQaStep() {
+		return qaStep;
+	}
+
+	public void setQaStep(int qaStep) {
+		this.qaStep = qaStep;
 	}
 
 	public Identification getIdentification() {

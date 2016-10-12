@@ -33,7 +33,7 @@ public class MessageSenderVerticle extends AbstractVerticle {
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	private static final String TEXT_CANT_GUESS = "I'm sorry, I can't guess your character.";
-	private static final String TEXT_GREETINGS = "Think about a real or fictional character , I will try to guess who it is.";
+	private static final String TEXT_GREETINGS = "Think about a real or fictional character, I will try to guess who it is.";
 	private static final String TEXT_PROBLEM = "Sorry, we got a problem";
 	private static final String TEXT_RESULT = "Your character is ";
 	private static final String TEXT_TYPING = "typing";
@@ -157,8 +157,12 @@ public class MessageSenderVerticle extends AbstractVerticle {
 		log.debug("[{}] RESULT: {}", qna.getChatId(), answer.getElement().getName());
 
 		vertx.<SendResponse>executeBlocking(h -> {
+			StringBuilder resultBuilder = new StringBuilder(TEXT_RESULT)
+					.append(answer.getElement().getName())
+					.append(" (").append(answer.getElement().getDescription()).append(")");
+			
 			h.complete(telegramBot.execute(new SendPhoto(chatId, answer.getElement().getAbsolutePicturePath())
-					.caption(TEXT_RESULT + answer.getElement().getName())
+					.caption(resultBuilder.toString())
 					.replyMarkup(keyboard)));
 		}, response -> {
 			SendResponse result = response.result();
