@@ -15,7 +15,7 @@ import com.pengrad.telegrambot.request.SetWebhook;
 import com.pengrad.telegrambot.response.BaseResponse;
 
 import akinabot.Akinabot;
-import akinabot.verticle.codec.UpdateCodec;
+import akinabot.verticle.codec.FSTCodec;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.EventBus;
@@ -57,7 +57,7 @@ public class TelegramWebhookUpdateVerticle extends AbstractVerticle {
 				log.debug("Update ID: {}", update.updateId());
 
 				eventBus.publish(Akinabot.BUS_BOT_UPDATE, update,
-						new DeliveryOptions().setCodecName(UpdateCodec.class.getName()));
+						new DeliveryOptions().setCodecName(FSTCodec.class.getName()));
 			});
 
 			request.response().end("success");

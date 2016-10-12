@@ -89,9 +89,9 @@ public class MessageSenderVerticle extends AbstractVerticle {
 		}, response -> {
 			BaseResponse result = response.result();
 			if (result.isOk()) {
-				log.debug("[{}] Greeting message sent", chatId);
+				log.debug("[{}] Typing message sent", chatId);
 			} else {
-				log.debug("[{}] Failed sending greeting message: ({}) {}", chatId,result.errorCode(), result.description());
+				log.debug("[{}] Failed sending typing message: ({}) {}", chatId,result.errorCode(), result.description());
 			}
 		});
 	}

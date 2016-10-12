@@ -16,7 +16,7 @@ import com.pengrad.telegrambot.request.GetUpdates;
 import com.pengrad.telegrambot.response.GetUpdatesResponse;
 
 import akinabot.Akinabot;
-import akinabot.verticle.codec.UpdateCodec;
+import akinabot.verticle.codec.FSTCodec;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
@@ -65,7 +65,7 @@ public class TelegramUpdateVerticle extends AbstractVerticle {
 		List<Update> updates = result.result();
 		updates.forEach(update -> {
 			eventBus.publish(Akinabot.BUS_BOT_UPDATE, update,
-					new DeliveryOptions().setCodecName(UpdateCodec.class.getName()));
+					new DeliveryOptions().setCodecName(FSTCodec.class.getName()));
 		});
 	}
 

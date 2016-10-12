@@ -19,7 +19,7 @@ import akinabot.model.bot.QuestionAnswer;
 import akinabot.service.AkinatorApiService;
 import akinabot.service.AkinatorApiService.InvalidAnswerException;
 import akinabot.service.AkinatorApiService.ResultNotOkException;
-import akinabot.verticle.codec.QuestionAnswerCodec;
+import akinabot.verticle.codec.FSTCodec;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
@@ -36,7 +36,7 @@ public class QuestionAnswerVerticle extends AbstractVerticle {
 	private EventBus eventBus;
 	
 	private final DeliveryOptions qnaDeliveryOptions = new DeliveryOptions()
-			.setCodecName(QuestionAnswerCodec.class.getName());
+			.setCodecName(FSTCodec.class.getName());
 	
 	@Override
 	public void start() throws Exception {
