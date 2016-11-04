@@ -26,6 +26,8 @@ public class Akinabot {
 	public static final String BUS_BOT_RESULT = "bot.result";
 	public static final String BUS_BOT_SORRY = "bot.sorry";
 	public static final String BUS_BOT_UPDATE = "bot.update";
+	public static final String BUS_BOT_SESSION_GET = "bot.session.get";
+	public static final String BUS_BOT_SESSION_SET = "bot.session.set";
 
 	public static final String BUTTON_PLAYAGAIN = "Play Again";
 	public static final String BUTTON_PLAYNOW = "Play Now";

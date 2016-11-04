@@ -1,6 +1,5 @@
 package akinabot.verticle;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -30,13 +29,12 @@ import io.vertx.core.http.HttpClientOptions;
 @Component
 public class QuestionAnswerVerticle extends AbstractVerticle {
 	private final Logger log = LoggerFactory.getLogger(getClass());
+	private static final String CODEC_NAME = FSTCodec.class.getName();
 
 	private AkinatorApiService akinatorApiService;
-	private ConcurrentHashMap<Long, List<QuestionAnswer>> sessions = new ConcurrentHashMap<>();
 	private EventBus eventBus;
-	
-	private final DeliveryOptions qnaDeliveryOptions = new DeliveryOptions()
-			.setCodecName(FSTCodec.class.getName());
+
+	private final DeliveryOptions qnaDeliveryOptions = new DeliveryOptions().setCodecName(CODEC_NAME);
 	
 	@Override
 	public void start() throws Exception {
@@ -47,19 +45,26 @@ public class QuestionAnswerVerticle extends AbstractVerticle {
 		this.akinatorApiService = new AkinatorApiService(vertx.createHttpClient(httpClientOptions));
 		this.eventBus = vertx.eventBus();
 
-		vertx.eventBus().consumer(Akinabot.BUS_BOT_UPDATE, this::onUpdate);
+		eventBus.<Update>consumer(Akinabot.BUS_BOT_UPDATE, msg -> {
+			final Update update = msg.body();
+			final Message message = update.message() != null ? update.message() : update.editedMessage();
+			
+			eventBus.<List<QuestionAnswer>>send(Akinabot.BUS_BOT_SESSION_GET, message.chat().id().toString(), h -> {
+				io.vertx.core.eventbus.Message<List<QuestionAnswer>> ret = h.result();
+				List<QuestionAnswer> qnas = ret.body();
+
+				onUpdate(message, qnas);
+			});
+		});
 	}
 
-	private void onUpdate(io.vertx.core.eventbus.Message<Update> msg) {
-		final Update update = msg.body();
-		final Message message = update.message() != null ? update.message() : update.editedMessage();
-
+	private void onUpdate(Message message, List<QuestionAnswer> qnas) {
 		final Long chatId = message.chat().id();
+		final DeliveryOptions setQnasOptions = new DeliveryOptions()
+				.setCodecName(CODEC_NAME)
+				.addHeader("chatId", chatId.toString());
 		
 		log.debug("[{}] Incoming update", chatId);
-
-		sessions.putIfAbsent(chatId, new ArrayList<QuestionAnswer>());
-		final List<QuestionAnswer> qnas = sessions.get(chatId);
 
 		final QuestionAnswer qna = new QuestionAnswer();
 		qna.setChatId(chatId);
@@ -68,6 +73,7 @@ public class QuestionAnswerVerticle extends AbstractVerticle {
 		// session is empty, send greetings
 		if (qnas.isEmpty()) {
 			qnas.add(qna);
+			eventBus.send(Akinabot.BUS_BOT_SESSION_SET, qnas, setQnasOptions);
 			log.info("[{}] NEW SESSION", chatId);
 
 			eventBus.publish(Akinabot.BUS_BOT_GREETINGS, qna, qnaDeliveryOptions);
@@ -79,6 +85,7 @@ public class QuestionAnswerVerticle extends AbstractVerticle {
 					|| Akinabot.BUTTON_PLAYNOW.equals(message.text())) {
 				qnas.clear();
 				qnas.add(qna);
+				eventBus.send(Akinabot.BUS_BOT_SESSION_SET, qnas, setQnasOptions);
 
 				log.info("[{}] START SESSION", chatId);
 			}
@@ -86,6 +93,7 @@ public class QuestionAnswerVerticle extends AbstractVerticle {
 			if (Akinabot.BUTTON_QUIT.equals(message.text())) {
 				qnas.clear();
 				qnas.add(qna);
+				eventBus.send(Akinabot.BUS_BOT_SESSION_SET, qnas, setQnasOptions);
 
 				log.info("[{}] QUIT SESSION", chatId);
 
@@ -109,7 +117,7 @@ public class QuestionAnswerVerticle extends AbstractVerticle {
 				qna.setIdentification(p.getIdentification());
 				qna.setStepInformation(p.getStepInformation());
 
-				handleQuestionAnswer(qnas, qna);
+				handleQuestionAnswer(qnas, qna, setQnasOptions);
 			});
 
 			akinatorApiService.sendOpenSession(future.completer());
@@ -135,20 +143,21 @@ public class QuestionAnswerVerticle extends AbstractVerticle {
 				}
 
 				qna.setStepInformation(h.result());
-				handleQuestionAnswer(qnas, qna);
+				handleQuestionAnswer(qnas, qna, setQnasOptions);
 			});
 
 			akinatorApiService.sendAnswer(qna.getIdentification(), qna.getQuestion().getStepInformation(), message, future.completer());
 		}
 	}
 
-	private void handleQuestionAnswer(List<QuestionAnswer> qnas, QuestionAnswer qna) {
+	private void handleQuestionAnswer(List<QuestionAnswer> qnas, QuestionAnswer qna, DeliveryOptions setQnasOptions) {
 		if (qna.getQuestion() != null) {
 			StepInformation stepInformation = qna.getQuestion().getStepInformation();
 			log.debug("[{}] Q/A: {} {}", qna.getChatId(), stepInformation.getQuestion(), qna.getAnswer().text());
 		}
 
 		qnas.add(qna);
+		eventBus.send(Akinabot.BUS_BOT_SESSION_SET, qnas, setQnasOptions);
 		
 		// complete, send answer
 		if (qna.getProgress() >= 90D || qna.getStep() >= 30) {
@@ -157,6 +166,7 @@ public class QuestionAnswerVerticle extends AbstractVerticle {
 				qna.setResult(h.result());
 				eventBus.publish(Akinabot.BUS_BOT_RESULT, qna, qnaDeliveryOptions);
 				qnas.clear();
+				eventBus.send(Akinabot.BUS_BOT_SESSION_SET, qnas, setQnasOptions);
 			});
 
 			akinatorApiService.getResult(qna.getChatId(), qna.getIdentification(), qna.getStepInformation(), future.completer());

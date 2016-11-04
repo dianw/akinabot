@@ -3,7 +3,6 @@ package akinabot.verticle;
 import java.util.List;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,18 +26,15 @@ import io.vertx.ext.mongo.MongoClient;
 public class MessagePersistenceVerticle extends AbstractVerticle {
 	private final Logger log = LoggerFactory.getLogger(getClass());
 	
-	private JsonObject mongoConfig;
 	private MongoClient mongoClient;
 
 	@Inject
-	public MessagePersistenceVerticle(@Named("mongoConfig") JsonObject mongoConfig) {
-		this.mongoConfig = mongoConfig;
+	public MessagePersistenceVerticle(MongoClient mongoClient) {
+		this.mongoClient = mongoClient;
 	}
 	
 	@Override
 	public void start() throws Exception {
-		mongoClient = MongoClient.createShared(vertx, mongoConfig);
-		
 		EventBus eventBus = vertx.eventBus();
 		eventBus.consumer(Akinabot.BUS_BOT_QUESTION, this::saveQna);
 		eventBus.consumer(Akinabot.BUS_BOT_RESULT, this::saveResult);
@@ -52,12 +48,14 @@ public class MessagePersistenceVerticle extends AbstractVerticle {
 		JsonObject qaDocument = new JsonObject()
 				.put("chatId", qa.getChatId());
 		
-		if (prevQa != null)
+		if (prevQa != null) {
 			qaDocument
 				.put("session", qa.getIdentification().getSession())
 				.put("question", stepInformation.getQuestion())
-				.put("answer", qa.getAnswer().text());
-		
+				.put("answer", qa.getAnswer().text())
+				.put("username", qa.getAnswer().chat().username());
+		}
+
 		mongoClient.save("qa", qaDocument, result -> {
 			if (result.succeeded()) {
 				log.debug("Data persisted {}", result.result());

@@ -121,7 +121,8 @@ public class MessageSenderVerticle extends AbstractVerticle {
 				.map(answer -> new KeyboardButton(answer.getAnswer())).collect(Collectors.toList());
 		buttons.add(new KeyboardButton(Akinabot.BUTTON_QUIT));
 
-		Keyboard keyboard = new ReplyKeyboardMarkup(buttons.toArray(new KeyboardButton[0])).oneTimeKeyboard(true)
+		Keyboard keyboard = new ReplyKeyboardMarkup(buttons.toArray(new KeyboardButton[0]))
+				.oneTimeKeyboard(true)
 				.resizeKeyboard(true);
 
 		vertx.<SendResponse>executeBlocking(h -> {
@@ -158,9 +159,11 @@ public class MessageSenderVerticle extends AbstractVerticle {
 
 		vertx.<SendResponse>executeBlocking(h -> {
 			StringBuilder resultBuilder = new StringBuilder(TEXT_RESULT)
-					.append(answer.getElement().getName())
-					.append(" (").append(answer.getElement().getDescription()).append(")");
-			
+					.append(answer.getElement().getName());
+			if (!"-".equals(answer.getElement().getDescription()) && !"".equals(answer.getElement().getDescription())) {
+				resultBuilder.append(" (").append(answer.getElement().getDescription()).append(")");
+			}
+
 			h.complete(telegramBot.execute(new SendPhoto(chatId, answer.getElement().getAbsolutePicturePath())
 					.caption(resultBuilder.toString())
 					.replyMarkup(keyboard)));
