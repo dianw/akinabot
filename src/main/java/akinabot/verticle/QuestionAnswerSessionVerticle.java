@@ -21,7 +21,7 @@ import io.vertx.redis.RedisClient;
 @Component
 public class QuestionAnswerSessionVerticle extends AbstractVerticle {
 	private final Logger log = LoggerFactory.getLogger(getClass());
-	
+
 	private RedisClient redisClient;
 	private FSTCodec fstCodec;
 
@@ -57,10 +57,19 @@ public class QuestionAnswerSessionVerticle extends AbstractVerticle {
 			log.debug("Binary retrieved, size: ", buffer.length());
 
 			vertx.<List<QuestionAnswer>>executeBlocking(b -> {
-				List<QuestionAnswer> qnas = (List<QuestionAnswer>) fstCodec.decodeFromWire(0, buffer);
-				b.complete(qnas);
+				try {
+					List<QuestionAnswer> qnas = (List<QuestionAnswer>) fstCodec.decodeFromWire(0, buffer);
+					b.complete(qnas);
+				} catch (Exception e) {
+					b.fail(e);
+				}
 			}, qnas -> {
-				message.reply(qnas.result(), new DeliveryOptions().setCodecName(fstCodec.name()));
+				if (qnas.succeeded()) {
+					message.reply(qnas.result(), new DeliveryOptions().setCodecName(fstCodec.name()));
+				} else {
+					message.reply(new ArrayList<QuestionAnswer>(), new DeliveryOptions().setCodecName(fstCodec.name()));
+				}
+
 			});
 		});
 	}

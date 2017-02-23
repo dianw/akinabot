@@ -3,31 +3,28 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>akinabot</groupId>
 	<artifactId>akinabot</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.0.0-SNAPSHOT</version>
 
 	<dependencies>
 		<!-- Telegram API -->
 		<dependency>
 			<groupId>com.github.pengrad</groupId>
 			<artifactId>java-telegram-bot-api</artifactId>
-			<version>2.1.1</version>
+			<version>2.3.1.1</version>
 		</dependency>
 
 		<!-- Vertx -->
 		<dependency>
 			<groupId>io.vertx</groupId>
 			<artifactId>vertx-core</artifactId>
-			<version>3.3.3</version>
 		</dependency>
 		<dependency>
 			<groupId>io.vertx</groupId>
 			<artifactId>vertx-mongo-client</artifactId>
-			<version>3.3.3</version>
 		</dependency>
 		<dependency>
 			<groupId>io.vertx</groupId>
 			<artifactId>vertx-redis-client</artifactId>
-			<version>3.3.3</version>
 		</dependency>
 
 		<!-- Serialization -->
@@ -55,7 +52,14 @@
 				<!-- Import dependency management from Spring Boot -->
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-dependencies</artifactId>
-				<version>1.4.1.RELEASE</version>
+				<version>1.5.1.RELEASE</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+			<dependency>
+				<groupId>io.vertx</groupId>
+				<artifactId>vertx-dependencies</artifactId>
+				<version>3.3.3</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
@@ -76,7 +80,7 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
-				<version>1.4.1.RELEASE</version>
+				<version>1.5.1.RELEASE</version>
 				<executions>
 					<execution>
 						<goals>
