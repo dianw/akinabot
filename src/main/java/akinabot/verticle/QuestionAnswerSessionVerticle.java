@@ -69,7 +69,6 @@ public class QuestionAnswerSessionVerticle extends AbstractVerticle {
 				} else {
 					message.reply(new ArrayList<QuestionAnswer>(), new DeliveryOptions().setCodecName(fstCodec.name()));
 				}
-
 			});
 		});
 	}

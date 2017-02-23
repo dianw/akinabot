@@ -7,11 +7,13 @@ import javax.inject.Inject;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.request.Keyboard;
 import com.pengrad.telegrambot.model.request.KeyboardButton;
+import com.pengrad.telegrambot.model.request.ParseMode;
 import com.pengrad.telegrambot.model.request.ReplyKeyboardMarkup;
 import com.pengrad.telegrambot.request.SendChatAction;
 import com.pengrad.telegrambot.request.SendMessage;
@@ -33,22 +35,26 @@ public class MessageSenderVerticle extends AbstractVerticle {
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	private static final String TEXT_CANT_GUESS = "I'm sorry, I can't guess your character.";
+	private static final String TEXT_DONATE = "Want to help keep AkinaBot online?";
+	private static final String TEXT_DONATE_PAYPAL = "Please donate to our PayPal.";
 	private static final String TEXT_GREETINGS = "Think about a real or fictional character, I will try to guess who it is.";
 	private static final String TEXT_PROBLEM = "Sorry, we got a problem";
 	private static final String TEXT_RESULT = "Your character is ";
 	private static final String TEXT_TYPING = "typing";
 
 	private TelegramBot telegramBot;
+	private String donateUrl;
 
 	@Inject
-	public MessageSenderVerticle(TelegramBot telegramBot) {
+	public MessageSenderVerticle(TelegramBot telegramBot, @Value("${akinabot.donate.url:}") String donateUrl) {
 		this.telegramBot = telegramBot;
+		this.donateUrl = donateUrl;
 	}
 
 	@Override
 	public void start() throws Exception {
 		EventBus eventBus = vertx.eventBus();
-		
+
 		eventBus.consumer(Akinabot.BUS_BOT_GREETINGS, this::sendGreetins);
 		eventBus.consumer(Akinabot.BUS_BOT_IQUESTION, this::sendPreviousQuestion);
 		eventBus.consumer(Akinabot.BUS_BOT_QUESTION, this::sendQuestion);
@@ -78,7 +84,7 @@ public class MessageSenderVerticle extends AbstractVerticle {
 				log.debug("[{}] Failed sending greeting message: ({}) {}", chatId,result.errorCode(), result.description());
 			}
 		});
-		
+
 	}
 
 	private void sendTypingAction(Long chatId) {
@@ -171,6 +177,7 @@ public class MessageSenderVerticle extends AbstractVerticle {
 			SendResponse result = response.result();
 			if (result.isOk()) {
 				log.debug("[{}] Result sent", chatId);
+				sendDonateMessage(chatId);
 			} else {
 				log.debug("[{}] Failed sending result: ({}) {}", chatId,result.errorCode(), result.description());
 			}
@@ -180,6 +187,29 @@ public class MessageSenderVerticle extends AbstractVerticle {
 	private void sendCantGuessResult(Long chatId, Keyboard keyboard) {
 		vertx.<SendResponse>executeBlocking(h -> {
 			h.complete(telegramBot.execute(new SendMessage(chatId, TEXT_CANT_GUESS).replyMarkup(keyboard)));
+		}, response -> {
+			SendResponse result = response.result();
+			if (result.isOk()) {
+				log.debug("[{}] Result sent", chatId);
+			} else {
+				log.debug("[{}] Failed sending result: ({}) {}", chatId, result.errorCode(), result.description());
+			}
+		});
+	}
+
+	private void sendDonateMessage(Long chatId) {
+		vertx.<SendResponse>executeBlocking(h -> {
+			StringBuilder messageBuilder = new StringBuilder(TEXT_DONATE)
+					.append("<a href=\"")
+					.append(donateUrl)
+					.append("\"> ")
+					.append(TEXT_DONATE_PAYPAL)
+					.append("</a>");
+
+			h.complete(telegramBot.execute(new SendMessage(chatId, messageBuilder.toString())
+					.disableNotification(true)
+					.disableWebPagePreview(false)
+					.parseMode(ParseMode.HTML)));
 		}, response -> {
 			SendResponse result = response.result();
 			if (result.isOk()) {
