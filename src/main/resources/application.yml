@@ -1,0 +1,4 @@
+telegram:
+  poll-rate: 500
+  token:
+  webhook: false

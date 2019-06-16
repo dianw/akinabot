@@ -3,8 +3,10 @@ package org.codenergic.akinabot.telegram;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.codenergic.akinabot.core.ChatProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -14,6 +16,7 @@ import com.pengrad.telegrambot.request.GetUpdates;
 import com.pengrad.telegrambot.response.GetUpdatesResponse;
 
 @Service
+@ConditionalOnProperty(name = "telegram.webhook", havingValue = "false")
 public class TelegramBotPollService {
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 	private final TelegramBot telegramBot;
@@ -21,6 +24,7 @@ public class TelegramBotPollService {
 	private final AtomicInteger offset = new AtomicInteger();
 
 	public TelegramBotPollService(TelegramBot telegramBot, TelegramBotService telegramBotService) {
+		logger.info("{} Running bot in polling mode", ChatProvider.TELEGRAM);
 		this.telegramBot = telegramBot;
 		this.telegramBotService = telegramBotService;
 	}
