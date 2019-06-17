@@ -28,9 +28,10 @@ class QuestionHandler implements MessageHandler {
 
 	@Override
 	public boolean acceptMessage(Session session, Message message) {
-		if (session == null) return false;
+		if (session == null || message.text() == null
+				|| message.text().equalsIgnoreCase(AnswerButtons.QUIT.getText())) return false;
 		int step = Integer.parseInt(session.getCurrentStepInformation().getStep());
-		return message.text() != null && session.getProgression() < 90d && step < 35;
+		return session.getProgression() < 90d && step < 35;
 	}
 
 	@Override

@@ -9,6 +9,7 @@ import org.codenergic.akinabot.core.ChatProvider;
 import org.codenergic.akinatorj.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import com.pengrad.telegrambot.TelegramBot;
@@ -31,6 +32,7 @@ class TelegramBotService {
 		this.messageHandlers = messageHandlers;
 	}
 
+	@Async
 	void onUpdate(Update update) {
 		Message message = update.message();
 		if (message == null) return;
