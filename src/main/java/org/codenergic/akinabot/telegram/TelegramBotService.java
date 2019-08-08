@@ -2,52 +2,56 @@ package org.codenergic.akinabot.telegram;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
-import org.codenergic.akinabot.core.ChatProvider;
+import javax.annotation.PostConstruct;
+
+import org.codenergic.akinabot.core.QueueConfig;
 import org.codenergic.akinatorj.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.Update;
-import com.pengrad.telegrambot.model.request.ChatAction;
-import com.pengrad.telegrambot.request.SendChatAction;
 
 @Service
 class TelegramBotService {
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
 	private final TelegramBot telegramBot;
+	private final Executor asyncExecutor;
+	private final BlockingQueue<Update> updateQueue;
 	private final Map<Long, Session> sessions = new ConcurrentHashMap<>();
 	private final List<MessageHandler> messageHandlers;
 
-	TelegramBotService(TelegramBot telegramBot, List<MessageHandler> messageHandlers) {
+	TelegramBotService(TelegramBot telegramBot, Executor asyncExecutor, QueueConfig queueConfig, List<MessageHandler> messageHandlers) {
 		logger.info("Initializing bot service, available message handlers: {}", messageHandlers);
+		this.asyncExecutor = asyncExecutor;
 		this.telegramBot = telegramBot;
+		this.updateQueue = queueConfig.getUpdateQueue();
 		this.messageHandlers = messageHandlers;
 	}
 
-	@Async
-	void onUpdate(Update update) {
+	@PostConstruct
+	void init() {
+		Executors.newSingleThreadExecutor().submit(() -> {
+			while (true) {
+				Update update = updateQueue.take();
+				asyncExecutor.execute(() -> onUpdate(update));
+			}
+		});
+	}
+
+	private void onUpdate(Update update) {
 		Message message = update.message();
 		if (message == null) return;
 		Long chatId = message.chat().id();
-		messageHandlers.stream()
-				.filter(handler -> handler.acceptMessage(sessions.get(chatId), message))
-				.peek(handler -> logger.debug("{} [{}] Found message handler: {}", ChatProvider.TELEGRAM, chatId, handler))
-				.peek(handler -> sendTypingAction(chatId))
-				.map(handler -> handler.handleMessage(sessions.get(chatId), message, telegramBot))
-				.filter(Objects::nonNull)
-				.forEach(session -> sessions.put(chatId, session));
-	}
-
-	private void sendTypingAction(Long chatId) {
-		telegramBot.execute(new SendChatAction(chatId, ChatAction.typing));
-		logger.debug("{} [{}] Sending typing action message", ChatProvider.TELEGRAM, chatId);
+		MessageHandlerChain messageHandlerChain = new MessageHandlerChain(telegramBot, sessions, messageHandlers);
+		messageHandlerChain.handleMessage(sessions.get(chatId), message);
 	}
 }

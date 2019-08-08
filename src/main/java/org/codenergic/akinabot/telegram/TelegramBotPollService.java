@@ -1,9 +1,11 @@
 package org.codenergic.akinabot.telegram;
 
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.codenergic.akinabot.core.ChatProvider;
+import org.codenergic.akinabot.core.QueueConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -20,13 +22,13 @@ import com.pengrad.telegrambot.response.GetUpdatesResponse;
 public class TelegramBotPollService {
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 	private final TelegramBot telegramBot;
-	private final TelegramBotService telegramBotService;
+	private final BlockingQueue<Update> updateQueue;
 	private final AtomicInteger offset = new AtomicInteger();
 
-	public TelegramBotPollService(TelegramBot telegramBot, TelegramBotService telegramBotService) {
+	public TelegramBotPollService(TelegramBot telegramBot, QueueConfig queueConfig) {
 		logger.info("{} Running bot in polling mode", ChatProvider.TELEGRAM);
 		this.telegramBot = telegramBot;
-		this.telegramBotService = telegramBotService;
+		this.updateQueue = queueConfig.getUpdateQueue();
 	}
 
 	@Scheduled(fixedRateString = "${telegram.poll-rate:2000}")
@@ -40,6 +42,6 @@ public class TelegramBotPollService {
 		if (!updates.isEmpty()) {
 			offset.set(updates.get(updates.size() - 1).updateId());
 		}
-		updates.forEach(telegramBotService::onUpdate);
+		updateQueue.addAll(updates);
 	}
 }

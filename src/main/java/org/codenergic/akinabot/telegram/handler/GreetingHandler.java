@@ -4,12 +4,12 @@ import org.codenergic.akinabot.core.AnswerButtons;
 import org.codenergic.akinabot.core.ChatProvider;
 import org.codenergic.akinabot.core.Texts;
 import org.codenergic.akinabot.telegram.MessageHandler;
+import org.codenergic.akinabot.telegram.MessageHandlerChain;
 import org.codenergic.akinatorj.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.request.Keyboard;
 import com.pengrad.telegrambot.model.request.KeyboardButton;
@@ -27,14 +27,14 @@ class GreetingHandler implements MessageHandler {
 	}
 
 	@Override
-	public Session handleMessage(Session session, Message message, TelegramBot telegramBot) {
+	public void handleMessage(Session session, Message message, MessageHandlerChain chain) {
 		KeyboardButton[] keyboardButtons = new KeyboardButton[]{
 				new KeyboardButton(AnswerButtons.PLAY_NOW.getText())
 		};
 		Keyboard keyboard = new ReplyKeyboardMarkup(keyboardButtons).oneTimeKeyboard(true);
-		telegramBot.execute(
+		chain.getTelegramBot().execute(
 				new SendMessage(message.chat().id(), Texts.GREETINGS.getText()).replyMarkup(keyboard));
 		logger.debug("{} [{}] Sending greeting message", ChatProvider.TELEGRAM, message.chat().id());
-		return session;
+		chain.handleMessage(session, message);
 	}
 }

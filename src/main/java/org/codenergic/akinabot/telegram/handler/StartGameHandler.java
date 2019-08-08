@@ -1,23 +1,24 @@
 package org.codenergic.akinabot.telegram.handler;
 
-import java.util.stream.Stream;
-
 import org.codenergic.akinabot.core.AnswerButtons;
 import org.codenergic.akinabot.core.Texts;
 import org.codenergic.akinabot.telegram.MessageHandler;
+import org.codenergic.akinabot.telegram.MessageHandlerChain;
 import org.codenergic.akinatorj.AkinatorJ;
 import org.codenergic.akinatorj.Session;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 
-import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.request.SendMessage;
 
 @Service
-@Order(Ordered.LOWEST_PRECEDENCE - 1)
+@Order(Ordered.LOWEST_PRECEDENCE - 50)
 class StartGameHandler implements MessageHandler {
+	private final Logger logger = LoggerFactory.getLogger(getClass());
 	private final AkinatorJ akinatorJ;
 
 	StartGameHandler(AkinatorJ akinatorJ) {
@@ -32,14 +33,19 @@ class StartGameHandler implements MessageHandler {
 	}
 
 	@Override
-	public Session handleMessage(Session session, Message message, TelegramBot telegramBot) {
-		Stream<Session> newSessions = Stream.of(akinatorJ.newSession("en"), akinatorJ.newSession("en2"));
-		return newSessions
-				.filter(s -> s.getCompletion().equalsIgnoreCase("OK"))
-				.findFirst()
-				.orElseGet(() -> {
-					telegramBot.execute(new SendMessage(message.chat().id(), Texts.PROBLEM.getText()));
-					return null;
-				});
+	public void handleMessage(Session session, Message message, MessageHandlerChain chain) {
+		String[] servers = {"en2", "en"};
+		for (String server : servers) {
+			try {
+				Session newSession = akinatorJ.newSession(server);
+				if (newSession != null) {
+					chain.handleMessage(newSession, message);
+					return;
+				}
+			} catch (IllegalStateException e) {
+				logger.error(e.getMessage(), e);
+			}
+		}
+		chain.getTelegramBot().execute(new SendMessage(message.chat().id(), Texts.PROBLEM.getText()));
 	}
 }

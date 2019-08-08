@@ -3,13 +3,13 @@ package org.codenergic.akinabot.telegram.handler;
 import org.codenergic.akinabot.core.ChatProvider;
 import org.codenergic.akinabot.core.QuestionAnswerUtils;
 import org.codenergic.akinabot.telegram.MessageHandler;
+import org.codenergic.akinabot.telegram.MessageHandlerChain;
 import org.codenergic.akinatorj.Session;
 import org.codenergic.akinatorj.model.Answer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.Message;
 
 @Service
@@ -33,11 +33,11 @@ class AnswerHandler implements MessageHandler {
 	}
 
 	@Override
-	public Session handleMessage(Session session, Message message, TelegramBot telegramBot) {
+	public void handleMessage(Session session, Message message, MessageHandlerChain chain) {
 		int answer = QuestionAnswerUtils.answerOrdinal(message.text(), session.getCurrentStepInformation());
 		String question = session.getCurrentStepInformation().getQuestion();
 		if (answer >= 0) session.answer(answer);
 		logger.debug("{} [{}] Sending answer: {} {}", ChatProvider.TELEGRAM, message.chat().id(), question, answer);
-		return session;
+		chain.handleMessage(session, message);
 	}
 }

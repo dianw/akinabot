@@ -3,12 +3,12 @@ package org.codenergic.akinabot.telegram.handler;
 import org.codenergic.akinabot.core.AnswerButtons;
 import org.codenergic.akinabot.core.Texts;
 import org.codenergic.akinabot.telegram.MessageHandler;
+import org.codenergic.akinabot.telegram.MessageHandlerChain;
 import org.codenergic.akinatorj.Session;
 import org.codenergic.akinatorj.model.Elements;
 import org.codenergic.akinatorj.model.ListParameters;
 import org.springframework.stereotype.Service;
 
-import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.request.Keyboard;
 import com.pengrad.telegrambot.model.request.KeyboardButton;
@@ -26,20 +26,20 @@ class WinHandler implements MessageHandler {
 	}
 
 	@Override
-	public Session handleMessage(Session session, Message message, TelegramBot telegramBot) {
+	public void handleMessage(Session session, Message message, MessageHandlerChain chain) {
 		ListParameters parameters = session.win();
 		if (parameters.getElements().isEmpty())
-			telegramBot.execute(new SendMessage(message.chat().id(), Texts.CANT_GUESS.getText()));
+			chain.getTelegramBot().execute(new SendMessage(message.chat().id(), Texts.CANT_GUESS.getText()));
 		Elements.Element element = parameters.getElements().get(0).getElement();
 		SendPhoto sendPhoto = new SendPhoto(message.chat().id(), element.getAbsolutePicturePath())
 				.caption(Texts.RESULT.getText() + element.getName() + " (" + element.getDescription() + ")");
-		telegramBot.execute(sendPhoto);
+		chain.getTelegramBot().execute(sendPhoto);
 		KeyboardButton[] keyboardButtons = new KeyboardButton[]{
 				new KeyboardButton(AnswerButtons.PLAY_AGAIN.getText())
 		};
 		Keyboard keyboard = new ReplyKeyboardMarkup(keyboardButtons).oneTimeKeyboard(true);
-		telegramBot.execute(
+		chain.getTelegramBot().execute(
 				new SendMessage(message.chat().id(), Texts.GREETINGS.getText()).replyMarkup(keyboard));
-		return session;
+		chain.handleMessage(null, message);
 	}
 }

@@ -2,3 +2,5 @@ telegram:
   poll-rate: 500
   token:
   webhook: false
+server:
+  port: 8080

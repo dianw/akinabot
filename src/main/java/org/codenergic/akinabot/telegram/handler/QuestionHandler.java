@@ -8,6 +8,7 @@ import org.codenergic.akinabot.core.AnswerButtons;
 import org.codenergic.akinabot.core.ChatProvider;
 import org.codenergic.akinabot.core.QuestionAnswerUtils;
 import org.codenergic.akinabot.telegram.MessageHandler;
+import org.codenergic.akinabot.telegram.MessageHandlerChain;
 import org.codenergic.akinatorj.Session;
 import org.codenergic.akinatorj.model.Answer;
 import org.codenergic.akinatorj.model.StepInformation;
@@ -15,7 +16,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.request.Keyboard;
 import com.pengrad.telegrambot.model.request.KeyboardButton;
@@ -35,7 +35,7 @@ class QuestionHandler implements MessageHandler {
 	}
 
 	@Override
-	public Session handleMessage(Session session, Message message, TelegramBot telegramBot) {
+	public void handleMessage(Session session, Message message, MessageHandlerChain chain) {
 		StepInformation stepInformation = session.getCurrentStepInformation();
 		String question = QuestionAnswerUtils.createQuestion(stepInformation);
 		List<String> answers = stepInformation.getAnswers().stream()
@@ -51,8 +51,8 @@ class QuestionHandler implements MessageHandler {
 		Keyboard keyboard = new ReplyKeyboardMarkup(answerButtons)
 				.oneTimeKeyboard(true)
 				.resizeKeyboard(true);
-		telegramBot.execute(new SendMessage(message.chat().id(), question).replyMarkup(keyboard));
+		chain.getTelegramBot().execute(new SendMessage(message.chat().id(), question).replyMarkup(keyboard));
 		logger.debug("{} [{}] Sending question: {}", ChatProvider.TELEGRAM, message.chat().id(), stepInformation.getQuestion());
-		return session;
+		chain.handleMessage(session, message);
 	}
 }
