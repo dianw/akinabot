@@ -35,6 +35,6 @@ class GreetingHandler implements MessageHandler {
 		chain.getTelegramBot().execute(
 				new SendMessage(message.chat().id(), Texts.GREETINGS.getText()).replyMarkup(keyboard));
 		logger.debug("{} [{}] Sending greeting message", ChatProvider.TELEGRAM, message.chat().id());
-		chain.handleMessage(session, message);
+		chain.handleMessage(null, message);
 	}
 }

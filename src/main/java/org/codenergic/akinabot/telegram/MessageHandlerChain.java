@@ -28,13 +28,13 @@ public class MessageHandlerChain {
 	public void handleMessage(Session session, Message message) {
 		if (chainPosition == messageHandlers.size()) return;
 		MessageHandler messageHandler = messageHandlers.get(chainPosition++);
+		if (session == null) {
+			sessions.remove(message.chat().id());
+		} else if (!session.equals(currentSession)) {
+			sessions.put(message.chat().id(), session);
+		}
 		if (messageHandler.acceptMessage(session, message)) {
 			LOGGER.debug("Executing handler: {}", messageHandler);
-			if (session == null) {
-				sessions.remove(message.chat().id());
-			} else if (!session.equals(currentSession)) {
-				sessions.put(message.chat().id(), session);
-			}
 			messageHandler.handleMessage(session, message, this);
 			currentSession = session;
 		} else {

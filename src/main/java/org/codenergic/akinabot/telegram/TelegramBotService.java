@@ -19,22 +19,28 @@ import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.Update;
 
+import io.micrometer.core.instrument.MeterRegistry;
+
 @Service
 class TelegramBotService {
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
+	private final Map<Long, Session> sessions = new ConcurrentHashMap<>();
+
 	private final TelegramBot telegramBot;
 	private final Executor asyncExecutor;
 	private final BlockingQueue<Update> updateQueue;
-	private final Map<Long, Session> sessions = new ConcurrentHashMap<>();
 	private final List<MessageHandler> messageHandlers;
+	private final MeterRegistry meterRegistry;
 
-	TelegramBotService(TelegramBot telegramBot, Executor asyncExecutor, QueueConfig queueConfig, List<MessageHandler> messageHandlers) {
+	TelegramBotService(TelegramBot telegramBot, Executor asyncExecutor, QueueConfig queueConfig, List<MessageHandler> messageHandlers,
+					   MeterRegistry meterRegistry) {
 		logger.info("Initializing bot service, available message handlers: {}", messageHandlers);
 		this.asyncExecutor = asyncExecutor;
 		this.telegramBot = telegramBot;
 		this.updateQueue = queueConfig.getUpdateQueue();
 		this.messageHandlers = messageHandlers;
+		this.meterRegistry = meterRegistry;
 	}
 
 	@PostConstruct
@@ -53,5 +59,6 @@ class TelegramBotService {
 		Long chatId = message.chat().id();
 		MessageHandlerChain messageHandlerChain = new MessageHandlerChain(telegramBot, sessions, messageHandlers);
 		messageHandlerChain.handleMessage(sessions.get(chatId), message);
+		meterRegistry.counter("bot.messages", "provider", "telegram", "chat_id", chatId.toString()).increment();
 	}
 }
