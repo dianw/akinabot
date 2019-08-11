@@ -7,7 +7,6 @@ import java.util.stream.Collectors;
 import org.codenergic.akinabot.core.AnswerButtons;
 import org.codenergic.akinabot.core.ChatProvider;
 import org.codenergic.akinabot.core.QuestionAnswerUtils;
-import org.codenergic.akinabot.telegram.MessageHandler;
 import org.codenergic.akinabot.telegram.MessageHandlerChain;
 import org.codenergic.akinatorj.Session;
 import org.codenergic.akinatorj.model.Answer;
@@ -23,16 +22,8 @@ import com.pengrad.telegrambot.model.request.ReplyKeyboardMarkup;
 import com.pengrad.telegrambot.request.SendMessage;
 
 @Service
-class QuestionHandler implements MessageHandler {
+class QuestionHandler implements QuestionAnswerHandler {
 	private final Logger logger = LoggerFactory.getLogger(getClass());
-
-	@Override
-	public boolean acceptMessage(Session session, Message message) {
-		if (session == null || message.text() == null
-				|| message.text().equalsIgnoreCase(AnswerButtons.QUIT.getText())) return false;
-		int step = Integer.parseInt(session.getCurrentStepInformation().getStep());
-		return session.getProgression() < 90d && step < 35;
-	}
 
 	@Override
 	public void handleMessage(Session session, Message message, MessageHandlerChain chain) {

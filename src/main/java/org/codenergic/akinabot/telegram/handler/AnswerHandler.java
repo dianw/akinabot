@@ -2,28 +2,25 @@ package org.codenergic.akinabot.telegram.handler;
 
 import org.codenergic.akinabot.core.ChatProvider;
 import org.codenergic.akinabot.core.QuestionAnswerUtils;
-import org.codenergic.akinabot.telegram.MessageHandler;
 import org.codenergic.akinabot.telegram.MessageHandlerChain;
 import org.codenergic.akinatorj.Session;
 import org.codenergic.akinatorj.model.Answer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 
 import com.pengrad.telegrambot.model.Message;
 
 @Service
-class AnswerHandler implements MessageHandler {
+@Order(Ordered.LOWEST_PRECEDENCE - 49)
+class AnswerHandler implements QuestionAnswerHandler {
 	private final Logger logger = LoggerFactory.getLogger(getClass());
-	private final QuestionHandler questionHandler;
-
-	AnswerHandler(QuestionHandler questionHandler) {
-		this.questionHandler = questionHandler;
-	}
 
 	@Override
 	public boolean acceptMessage(Session session, Message message) {
-		boolean accept = questionHandler.acceptMessage(session, message);
+		boolean accept = QuestionAnswerHandler.super.acceptMessage(session, message);
 		if (!accept) return false;
 		String text = message.text();
 		for (Answer answer : session.getCurrentStepInformation().getAnswers()) {
