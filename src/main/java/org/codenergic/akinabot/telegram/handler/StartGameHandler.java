@@ -1,6 +1,7 @@
 package org.codenergic.akinabot.telegram.handler;
 
 import org.codenergic.akinabot.core.AnswerButtons;
+import org.codenergic.akinabot.core.ChatProvider;
 import org.codenergic.akinabot.core.Texts;
 import org.codenergic.akinabot.telegram.MessageHandler;
 import org.codenergic.akinabot.telegram.MessageHandlerChain;
@@ -34,11 +35,12 @@ class StartGameHandler implements MessageHandler {
 
 	@Override
 	public void handleMessage(Session session, Message message, MessageHandlerChain chain) {
-		String[] servers = {"en2", "en"};
+		String[] servers = {"en", "en2", "en3"};
 		for (String server : servers) {
 			try {
 				Session newSession = akinatorJ.newSession(server);
 				if (newSession != null) {
+					logger.debug("{} [{}] Starting game on server [{}]", ChatProvider.TELEGRAM, message.chat().id(), server);
 					chain.handleMessage(newSession, message);
 					return;
 				}
