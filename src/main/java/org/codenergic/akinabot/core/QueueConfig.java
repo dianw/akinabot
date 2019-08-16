@@ -5,13 +5,19 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import org.springframework.stereotype.Component;
 
+import com.linecorp.bot.model.event.Event;
 import com.pengrad.telegrambot.model.Update;
 
 @Component
 public class QueueConfig {
-	private final BlockingQueue<Update> updateQueue = new LinkedBlockingQueue<>();
+	private final BlockingQueue<Event> lineEventQueue = new LinkedBlockingQueue<>();
+	private final BlockingQueue<Update> telegramUpdateQueue = new LinkedBlockingQueue<>();
 
-	public BlockingQueue<Update> getUpdateQueue() {
-		return updateQueue;
+	public BlockingQueue<Event> lineEventQueue() {
+		return lineEventQueue;
+	}
+
+	public BlockingQueue<Update> telegramUpdateQueue() {
+		return telegramUpdateQueue;
 	}
 }

@@ -28,7 +28,7 @@ public class TelegramBotPollService {
 	public TelegramBotPollService(TelegramBot telegramBot, QueueConfig queueConfig) {
 		logger.info("{} Running bot in polling mode", ChatProvider.TELEGRAM);
 		this.telegramBot = telegramBot;
-		this.updateQueue = queueConfig.getUpdateQueue();
+		this.updateQueue = queueConfig.telegramUpdateQueue();
 	}
 
 	@Scheduled(fixedRateString = "${telegram.poll-rate:2000}")

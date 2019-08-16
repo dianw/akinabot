@@ -25,10 +25,10 @@ public class TelegramBotWebhookService {
 
 	public TelegramBotWebhookService(QueueConfig queueConfig) {
 		logger.info("{} Running bot in webhook mode", ChatProvider.TELEGRAM);
-		this.updateQueue = queueConfig.getUpdateQueue();
+		this.updateQueue = queueConfig.telegramUpdateQueue();
 	}
 
-	@PostMapping("/bot/telegram")
+	@PostMapping("/bot/telegram${telegram.token}")
 	public String getUpdate(HttpServletRequest request) throws IOException {
 		try (BufferedReader reader = request.getReader()) {
 			Update update = BotUtils.parseUpdate(reader);
