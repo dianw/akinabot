@@ -2,6 +2,12 @@ telegram:
   poll-rate: 500
   token:
   webhook: false
+line:
+  bot:
+    channel-token: ''
+    channel-secret: ''
+    handler:
+      path: /bot/line
 server:
   port: 8080
 management:

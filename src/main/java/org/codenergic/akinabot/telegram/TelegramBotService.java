@@ -28,17 +28,17 @@ class TelegramBotService {
 	private final Map<Long, Session> sessions = new ConcurrentHashMap<>();
 
 	private final TelegramBot telegramBot;
-	private final Executor asyncExecutor;
+	private final Executor akinabotExecutor;
 	private final BlockingQueue<Update> updateQueue;
 	private final List<MessageHandler> messageHandlers;
 	private final MeterRegistry meterRegistry;
 
-	TelegramBotService(TelegramBot telegramBot, Executor asyncExecutor, QueueConfig queueConfig, List<MessageHandler> messageHandlers,
+	TelegramBotService(TelegramBot telegramBot, Executor akinabotExecutor, QueueConfig queueConfig, List<MessageHandler> messageHandlers,
 					   MeterRegistry meterRegistry) {
 		logger.info("Initializing bot service, available message handlers: {}", messageHandlers);
-		this.asyncExecutor = asyncExecutor;
+		this.akinabotExecutor = akinabotExecutor;
 		this.telegramBot = telegramBot;
-		this.updateQueue = queueConfig.getUpdateQueue();
+		this.updateQueue = queueConfig.telegramUpdateQueue();
 		this.messageHandlers = messageHandlers;
 		this.meterRegistry = meterRegistry;
 	}
@@ -48,7 +48,7 @@ class TelegramBotService {
 		Executors.newSingleThreadExecutor().submit(() -> {
 			while (true) {
 				Update update = updateQueue.take();
-				asyncExecutor.execute(() -> onUpdate(update));
+				akinabotExecutor.execute(() -> onUpdate(update));
 			}
 		});
 	}

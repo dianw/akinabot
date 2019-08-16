@@ -25,7 +25,7 @@ public class TelegramBotWebhookService {
 
 	public TelegramBotWebhookService(QueueConfig queueConfig) {
 		logger.info("{} Running bot in webhook mode", ChatProvider.TELEGRAM);
-		this.updateQueue = queueConfig.getUpdateQueue();
+		this.updateQueue = queueConfig.telegramUpdateQueue();
 	}
 
 	@PostMapping("/bot/telegram${telegram.token}")

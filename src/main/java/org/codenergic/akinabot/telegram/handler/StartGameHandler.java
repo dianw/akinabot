@@ -45,7 +45,7 @@ class StartGameHandler implements MessageHandler {
 					return;
 				}
 			} catch (IllegalStateException e) {
-				logger.error(e.getMessage(), e);
+				logger.error("Server [{}] down: [{}]", server, e.getMessage(), e);
 			}
 		}
 		chain.getTelegramBot().execute(new SendMessage(message.chat().id(), Texts.PROBLEM.getText()));
