@@ -16,7 +16,7 @@ import com.pengrad.telegrambot.model.request.ReplyKeyboardMarkup;
 import com.pengrad.telegrambot.request.SendMessage;
 import com.pengrad.telegrambot.request.SendPhoto;
 
-@Service
+@Service("telegramWinHandler")
 class WinHandler implements MessageHandler {
 	@Override
 	public boolean acceptMessage(Session session, Message message) {
@@ -29,16 +29,17 @@ class WinHandler implements MessageHandler {
 	public void handleMessage(Session session, Message message, MessageHandlerChain chain) {
 		ListParameters parameters = session.win();
 		if (parameters.getElements().isEmpty())
-			chain.getTelegramBot().execute(new SendMessage(message.chat().id(), Texts.CANT_GUESS.getText()));
+			chain.executeTelegramRequest(message.chat(), message.from(),
+					new SendMessage(message.chat().id(), Texts.CANT_GUESS.getText()));
 		Elements.Element element = parameters.getElements().get(0).getElement();
 		SendPhoto sendPhoto = new SendPhoto(message.chat().id(), element.getAbsolutePicturePath())
 				.caption(Texts.RESULT.getText() + element.getName() + " (" + element.getDescription() + ")");
-		chain.getTelegramBot().execute(sendPhoto);
+		chain.executeTelegramRequest(message.chat(), message.from(), sendPhoto);
 		KeyboardButton[] keyboardButtons = new KeyboardButton[]{
 				new KeyboardButton(AnswerButtons.PLAY_AGAIN.getText())
 		};
 		Keyboard keyboard = new ReplyKeyboardMarkup(keyboardButtons).oneTimeKeyboard(true);
-		chain.getTelegramBot().execute(
+		chain.executeTelegramRequest(message.chat(), message.from(),
 				new SendMessage(message.chat().id(), Texts.GREETINGS.getText()).replyMarkup(keyboard));
 		chain.handleMessage(null, message);
 	}

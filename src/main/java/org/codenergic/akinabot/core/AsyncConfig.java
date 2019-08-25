@@ -17,6 +17,7 @@ public class AsyncConfig implements SchedulingConfigurer {
 	public Executor akinabotExecutor() {
 		ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
 		executor.setCorePoolSize(50);
+		executor.setMaxPoolSize(100);
 		executor.setThreadNamePrefix("AkinabotExecutor-");
 		executor.initialize();
 		return executor;

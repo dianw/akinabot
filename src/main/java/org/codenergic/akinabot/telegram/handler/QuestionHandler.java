@@ -21,7 +21,7 @@ import com.pengrad.telegrambot.model.request.KeyboardButton;
 import com.pengrad.telegrambot.model.request.ReplyKeyboardMarkup;
 import com.pengrad.telegrambot.request.SendMessage;
 
-@Service
+@Service("telegramQuestionHandler")
 class QuestionHandler implements QuestionAnswerHandler {
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -42,7 +42,8 @@ class QuestionHandler implements QuestionAnswerHandler {
 		Keyboard keyboard = new ReplyKeyboardMarkup(answerButtons)
 				.oneTimeKeyboard(true)
 				.resizeKeyboard(true);
-		chain.getTelegramBot().execute(new SendMessage(message.chat().id(), question).replyMarkup(keyboard));
+		chain.executeTelegramRequest(message.chat(), message.from(),
+				new SendMessage(message.chat().id(), question).replyMarkup(keyboard));
 		logger.debug("{} [{}] Sending question: {}", ChatProvider.TELEGRAM, message.chat().id(), stepInformation.getQuestion());
 		chain.handleMessage(session, message);
 	}

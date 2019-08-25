@@ -12,9 +12,14 @@ import com.pengrad.telegrambot.model.Update;
 public class QueueConfig {
 	private final BlockingQueue<Event> lineEventQueue = new LinkedBlockingQueue<>();
 	private final BlockingQueue<Update> telegramUpdateQueue = new LinkedBlockingQueue<>();
+	private final BlockingQueue<MessageEvent> messageLoggerQueue = new LinkedBlockingQueue<>();
 
 	public BlockingQueue<Event> lineEventQueue() {
 		return lineEventQueue;
+	}
+
+	public BlockingQueue<MessageEvent> messageLoggerQueue() {
+		return messageLoggerQueue;
 	}
 
 	public BlockingQueue<Update> telegramUpdateQueue() {

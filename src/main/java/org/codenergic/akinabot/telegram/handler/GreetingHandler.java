@@ -16,7 +16,7 @@ import com.pengrad.telegrambot.model.request.KeyboardButton;
 import com.pengrad.telegrambot.model.request.ReplyKeyboardMarkup;
 import com.pengrad.telegrambot.request.SendMessage;
 
-@Service
+@Service("telegramGreetingHandler")
 class GreetingHandler implements MessageHandler {
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -32,7 +32,7 @@ class GreetingHandler implements MessageHandler {
 				new KeyboardButton(AnswerButtons.PLAY_NOW.getText())
 		};
 		Keyboard keyboard = new ReplyKeyboardMarkup(keyboardButtons).oneTimeKeyboard(true);
-		chain.getTelegramBot().execute(
+		chain.executeTelegramRequest(message.chat(), message.from(),
 				new SendMessage(message.chat().id(), Texts.GREETINGS.getText()).replyMarkup(keyboard));
 		logger.debug("{} [{}] Sending greeting message", ChatProvider.TELEGRAM, message.chat().id());
 		chain.handleMessage(null, message);
