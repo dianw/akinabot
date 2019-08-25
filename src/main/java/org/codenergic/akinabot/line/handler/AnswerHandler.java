@@ -1,8 +1,8 @@
-package org.codenergic.akinabot.telegram.handler;
+package org.codenergic.akinabot.line.handler;
 
 import org.codenergic.akinabot.core.ChatProvider;
 import org.codenergic.akinabot.core.QuestionAnswerUtils;
-import org.codenergic.akinabot.telegram.MessageHandlerChain;
+import org.codenergic.akinabot.line.MessageHandlerChain;
 import org.codenergic.akinatorj.Session;
 import org.codenergic.akinatorj.model.Answer;
 import org.slf4j.Logger;
@@ -11,18 +11,18 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 
-import com.pengrad.telegrambot.model.Message;
+import com.linecorp.bot.model.event.Event;
 
-@Service("telegramAnswerHandler")
+@Service("lineAnswerHandler")
 @Order(Ordered.LOWEST_PRECEDENCE - 49)
 class AnswerHandler implements QuestionAnswerHandler {
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
 	@Override
-	public boolean acceptMessage(Session session, Message message) {
-		boolean accept = QuestionAnswerHandler.super.acceptMessage(session, message);
+	public boolean acceptMessage(Session session, Event event) {
+		boolean accept = QuestionAnswerHandler.super.acceptMessage(session, event);
 		if (!accept) return false;
-		String text = message.text();
+		String text = getMessageText(event).get();
 		for (Answer answer : session.getCurrentStepInformation().getAnswers()) {
 			if (text.equalsIgnoreCase(answer.getAnswer())) return true;
 		}
@@ -30,11 +30,12 @@ class AnswerHandler implements QuestionAnswerHandler {
 	}
 
 	@Override
-	public void handleMessage(Session session, Message message, MessageHandlerChain chain) {
-		int answer = QuestionAnswerUtils.answerOrdinal(message.text(), session.getCurrentStepInformation());
+	public void handleMessage(Session session, Event event, MessageHandlerChain chain) {
+		String text = getMessageText(event).get();
+		int answer = QuestionAnswerUtils.answerOrdinal(text, session.getCurrentStepInformation());
 		String question = session.getCurrentStepInformation().getQuestion();
 		if (answer >= 0) session.answer(answer);
-		logger.debug("{} [{}] Sending answer: {} {}", ChatProvider.TELEGRAM, message.chat().id(), question, answer);
-		chain.handleMessage(session, message);
+		logger.debug("{} [{}] Sending answer: {} {}", ChatProvider.LINE, event.getSource().getSenderId(), question, answer);
+		chain.handleMessage(session, event);
 	}
 }

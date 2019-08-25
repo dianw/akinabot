@@ -18,7 +18,7 @@ import com.pengrad.telegrambot.model.request.ChatAction;
 import com.pengrad.telegrambot.request.SendChatAction;
 import com.pengrad.telegrambot.response.BaseResponse;
 
-@Service
+@Service("telegramTypingActionHandler")
 @Order(Ordered.LOWEST_PRECEDENCE - 100)
 class TypingActionHandler implements MessageHandler {
 	private final Logger logger = LoggerFactory.getLogger(getClass());
@@ -30,17 +30,18 @@ class TypingActionHandler implements MessageHandler {
 
 	@Override
 	public void handleMessage(Session session, Message message, MessageHandlerChain chain) {
-		chain.getTelegramBot().execute(new SendChatAction(message.chat().id(), ChatAction.typing), new Callback<SendChatAction, BaseResponse>() {
-			@Override
-			public void onResponse(SendChatAction request, BaseResponse response) {
-				// do nothing
-			}
+		chain.executeTelegramRequest(message.chat(), message.from(),
+				new SendChatAction(message.chat().id(), ChatAction.typing), new Callback<SendChatAction, BaseResponse>() {
+					@Override
+					public void onResponse(SendChatAction request, BaseResponse response) {
+						// do nothing
+					}
 
-			@Override
-			public void onFailure(SendChatAction request, IOException e) {
-				// do nothing
-			}
-		});
+					@Override
+					public void onFailure(SendChatAction request, IOException e) {
+						// do nothing
+					}
+				});
 		logger.debug("{} [{}] Sending typing action message", ChatProvider.TELEGRAM, message.chat().id());
 		chain.handleMessage(session, message);
 	}
