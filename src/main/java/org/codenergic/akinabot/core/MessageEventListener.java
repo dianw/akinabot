@@ -1,8 +1,10 @@
 package org.codenergic.akinabot.core;
 
+import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Stream;
 
 import javax.annotation.PostConstruct;
 
@@ -29,7 +31,7 @@ public class MessageEventListener {
 		ExecutorService executor = Executors.newSingleThreadExecutor();
 		executor.submit(() -> {
 			logger.info("Start listening to message event");
-			while(true) {
+			while (true) {
 				try {
 					sendMetric(messageLoggerQueue.take());
 				} catch (Exception e) {
@@ -40,6 +42,11 @@ public class MessageEventListener {
 	}
 
 	private void sendMetric(MessageEvent event) {
+		if (Stream.of(event.getChatProvider(), event.getInOut(), event.getUsername(), event.getChatId())
+				.anyMatch(Objects::isNull)) {
+			logger.warn("Skipping counter: {}", event);
+			return;
+		}
 		meterRegistry.counter("bot.messages",
 				"provider", event.getChatProvider().toString().toLowerCase(),
 				"in_out", event.getInOut().toString().toLowerCase(),
