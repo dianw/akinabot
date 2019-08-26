@@ -1,19 +1,28 @@
 version: '3'
 services:
   akinabot:
-    container_name: akinabot
+    container_name: akinabot-server
     image: dianw/akinabot
     ports:
       - 8080:8080
     environment:
       TELEGRAM_TOKEN:
+      TELEGRAM_WEBHOOK: 'true'
+      LINE_TOKEN:
+      LINE_SECRET:
+  hazelcast:
+    container_name: akinabot-hazelcast
+    image: hazelcast/hazelcast:3.12.2
+    environment:
+      PROMETHEUS_PORT: 8080
   prometheus:
-    container_name: prometheus
+    container_name: akinabot-prometheus
     image: prom/prometheus
     ports:
       - 9090:9090
     depends_on:
       - akinabot
+      - hazelcast
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus:/prometheus

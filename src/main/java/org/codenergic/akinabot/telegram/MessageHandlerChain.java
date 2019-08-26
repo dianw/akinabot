@@ -50,7 +50,8 @@ public class MessageHandlerChain {
 		MessageHandler messageHandler = messageHandlers.get(chainPosition++);
 		if (session == null) {
 			sessions.remove(message.chat().id());
-		} else if (!session.equals(currentSession)) {
+		} else if (currentSession == null ||
+				!session.getNewSessionResponse().equals(currentSession.getNewSessionResponse())) {
 			sessions.put(message.chat().id(), session);
 		}
 		if (messageHandler.acceptMessage(session, message)) {

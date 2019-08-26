@@ -4,7 +4,7 @@ import org.codenergic.akinabot.core.Texts;
 import org.codenergic.akinabot.line.MessageHandler;
 import org.codenergic.akinabot.line.MessageHandlerChain;
 import org.codenergic.akinatorj.Session;
-import org.codenergic.akinatorj.model.Elements;
+import org.codenergic.akinatorj.model.Element;
 import org.codenergic.akinatorj.model.ListParameters;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -31,7 +31,7 @@ class WinHandler implements MessageHandler {
 			chain.pushLineMessage(event.getSource().getSenderId(), TextMessage.builder()
 					.text(Texts.CANT_GUESS.getText())
 					.build());
-		Elements.Element element = parameters.getElements().get(0).getElement();
+		Element element = parameters.getElements().get(0).getElement();
 		ImageMessage imageMessage = ImageMessage.builder()
 				.originalContentUrl(element.getAbsolutePicturePath())
 				.previewImageUrl(element.getAbsolutePicturePath())

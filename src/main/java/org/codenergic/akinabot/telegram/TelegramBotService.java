@@ -2,8 +2,8 @@ package org.codenergic.akinabot.telegram;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
@@ -13,6 +13,7 @@ import javax.annotation.PostConstruct;
 import org.codenergic.akinabot.core.ChatProvider;
 import org.codenergic.akinabot.core.MessageEvent;
 import org.codenergic.akinabot.core.QueueConfig;
+import org.codenergic.akinatorj.AkinatorJ;
 import org.codenergic.akinatorj.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,16 +27,19 @@ import com.pengrad.telegrambot.model.Update;
 class TelegramBotService {
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
-	private final Map<Long, Session> sessions = new ConcurrentHashMap<>();
+	private final Map<Long, Session> sessions;
 
+	private final AkinatorJ akinatorJ;
 	private final TelegramBot telegramBot;
 	private final Executor akinabotExecutor;
 	private final BlockingQueue<Update> updateQueue;
 	private final Consumer<MessageEvent> messageLogger;
 	private final List<MessageHandler> messageHandlers;
 
-	TelegramBotService(TelegramBot telegramBot, Executor akinabotExecutor, QueueConfig queueConfig, List<MessageHandler> messageHandlers) {
+	TelegramBotService(AkinatorJ akinatorJ, TelegramBot telegramBot, Executor akinabotExecutor, QueueConfig queueConfig, List<MessageHandler> messageHandlers) {
 		logger.info("Initializing bot service, available message handlers: {}", messageHandlers);
+		this.akinatorJ = akinatorJ;
+		this.sessions = queueConfig.telegramSessions();
 		this.akinabotExecutor = akinabotExecutor;
 		this.telegramBot = telegramBot;
 		this.updateQueue = queueConfig.telegramUpdateQueue();
@@ -66,6 +70,9 @@ class TelegramBotService {
 	private void onUpdate(Message message) {
 		Long chatId = message.chat().id();
 		MessageHandlerChain messageHandlerChain = new MessageHandlerChain(telegramBot, sessions, messageHandlers, messageLogger);
-		messageHandlerChain.handleMessage(sessions.get(chatId), message);
+		Session session = Optional.ofNullable(sessions.get(chatId))
+				.map(s -> s.bind(akinatorJ))
+				.orElse(null);
+		messageHandlerChain.handleMessage(session, message);
 	}
 }

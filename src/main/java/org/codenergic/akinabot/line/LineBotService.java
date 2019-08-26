@@ -2,8 +2,8 @@ package org.codenergic.akinabot.line;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
@@ -13,6 +13,7 @@ import javax.annotation.PostConstruct;
 import org.codenergic.akinabot.core.ChatProvider;
 import org.codenergic.akinabot.core.MessageEvent;
 import org.codenergic.akinabot.core.QueueConfig;
+import org.codenergic.akinatorj.AkinatorJ;
 import org.codenergic.akinatorj.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,17 +27,20 @@ import com.linecorp.bot.model.event.source.Source;
 class LineBotService {
 	private final Logger logger = LoggerFactory.getLogger(getClass());
 
-	private final Map<Source, Session> sessions = new ConcurrentHashMap<>();
+	private final Map<Source, Session> sessions;
 
+	private final AkinatorJ akinatorJ;
 	private final LineMessagingClient lineMessagingClient;
 	private final Executor akinabotExecutor;
 	private final BlockingQueue<Event> lineEventQueue;
 	private final Consumer<MessageEvent> messageLogger;
 	private final List<MessageHandler> messageHandlers;
 
-	LineBotService(LineMessagingClient lineMessagingClient, Executor akinabotExecutor, QueueConfig queueConfig, List<MessageHandler> messageHandlers) {
-		this.lineMessagingClient = lineMessagingClient;
+	LineBotService(AkinatorJ akinatorJ, LineMessagingClient lineMessagingClient, Executor akinabotExecutor, QueueConfig queueConfig, List<MessageHandler> messageHandlers) {
 		logger.info("Initializing bot service, available message handlers: {}", messageHandlers);
+		this.akinatorJ = akinatorJ;
+		this.sessions = queueConfig.lineSessions();
+		this.lineMessagingClient = lineMessagingClient;
 		this.akinabotExecutor = akinabotExecutor;
 		this.lineEventQueue = queueConfig.lineEventQueue();
 		this.messageLogger = queueConfig.messageLoggerQueue()::add;
@@ -64,6 +68,9 @@ class LineBotService {
 
 	private void onUpdate(Event event) {
 		MessageHandlerChain messageHandlerChain = new MessageHandlerChain(lineMessagingClient, sessions, messageHandlers, messageLogger);
-		messageHandlerChain.handleMessage(sessions.get(event.getSource()), event);
+		Session session = Optional.ofNullable(sessions.get(event.getSource()))
+				.map(s -> s.bind(akinatorJ))
+				.orElse(null);
+		messageHandlerChain.handleMessage(session, event);
 	}
 }

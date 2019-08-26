@@ -5,7 +5,7 @@ import org.codenergic.akinabot.core.Texts;
 import org.codenergic.akinabot.telegram.MessageHandler;
 import org.codenergic.akinabot.telegram.MessageHandlerChain;
 import org.codenergic.akinatorj.Session;
-import org.codenergic.akinatorj.model.Elements;
+import org.codenergic.akinatorj.model.Element;
 import org.codenergic.akinatorj.model.ListParameters;
 import org.springframework.stereotype.Service;
 
@@ -31,7 +31,7 @@ class WinHandler implements MessageHandler {
 		if (parameters.getElements().isEmpty())
 			chain.executeTelegramRequest(message.chat(), message.from(),
 					new SendMessage(message.chat().id(), Texts.CANT_GUESS.getText()));
-		Elements.Element element = parameters.getElements().get(0).getElement();
+		Element element = parameters.getElements().get(0).getElement();
 		SendPhoto sendPhoto = new SendPhoto(message.chat().id(), element.getAbsolutePicturePath())
 				.caption(Texts.RESULT.getText() + element.getName() + " (" + element.getDescription() + ")");
 		chain.executeTelegramRequest(message.chat(), message.from(), sendPhoto);

@@ -41,7 +41,8 @@ public class MessageHandlerChain {
 		MessageHandler messageHandler = messageHandlers.get(chainPosition++);
 		if (session == null) {
 			sessions.remove(event.getSource());
-		} else if (!session.equals(currentSession)) {
+		} else if (currentSession == null ||
+				!session.getNewSessionResponse().equals(currentSession.getNewSessionResponse())) {
 			sessions.put(event.getSource(), session);
 		}
 		if (messageHandler.acceptMessage(session, event)) {

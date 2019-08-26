@@ -1,6 +1,8 @@
 package org.codenergic.akinabot.core;
 
-public class MessageEvent {
+import java.io.Serializable;
+
+public class MessageEvent implements Serializable {
 	private final ChatProvider chatProvider;
 	private final InOut inOut;
 	private final String chatId;
