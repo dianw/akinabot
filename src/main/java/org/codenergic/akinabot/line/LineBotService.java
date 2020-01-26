@@ -5,13 +5,12 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.function.Consumer;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 
-import org.codenergic.akinabot.core.ChatProvider;
-import org.codenergic.akinabot.core.MessageEvent;
 import org.codenergic.akinabot.core.QueueConfig;
 import org.codenergic.akinatorj.AkinatorJ;
 import org.codenergic.akinatorj.Session;
@@ -33,8 +32,10 @@ class LineBotService {
 	private final LineMessagingClient lineMessagingClient;
 	private final Executor akinabotExecutor;
 	private final BlockingQueue<Event> lineEventQueue;
-	private final Consumer<MessageEvent> messageLogger;
 	private final List<MessageHandler> messageHandlers;
+	private final ExecutorService queueExecutor = Executors.newSingleThreadExecutor();
+
+	private boolean active = true;
 
 	LineBotService(AkinatorJ akinatorJ, LineMessagingClient lineMessagingClient, Executor akinabotExecutor, QueueConfig queueConfig, List<MessageHandler> messageHandlers) {
 		logger.info("Initializing bot service, available message handlers: {}", messageHandlers);
@@ -43,22 +44,19 @@ class LineBotService {
 		this.lineMessagingClient = lineMessagingClient;
 		this.akinabotExecutor = akinabotExecutor;
 		this.lineEventQueue = queueConfig.lineEventQueue();
-		this.messageLogger = queueConfig.messageLoggerQueue()::add;
 		this.messageHandlers = messageHandlers;
 	}
 
 	@PostConstruct
 	void init() {
-		Executors.newSingleThreadExecutor().submit(() -> {
-			while (true) {
+		queueExecutor.submit(() -> {
+			while (active) {
 				try {
 					Event event = lineEventQueue.take();
 					// handle updates in pooled thread
 					akinabotExecutor.execute(() -> onUpdate(event));
 					// publish bot.message metric
 					Source eventSource = event.getSource();
-					messageLogger.accept(new MessageEvent(ChatProvider.LINE, MessageEvent.InOut.INBOUND,
-							eventSource.getSenderId(), eventSource.getSenderId()));
 				} catch (Exception e) {
 					logger.error(e.getMessage(), e);
 				}
@@ -66,8 +64,14 @@ class LineBotService {
 		});
 	}
 
+	@PreDestroy
+	void shutdown() {
+		active = false;
+		queueExecutor.shutdown();
+	}
+
 	private void onUpdate(Event event) {
-		MessageHandlerChain messageHandlerChain = new MessageHandlerChain(lineMessagingClient, sessions, messageHandlers, messageLogger);
+		MessageHandlerChain messageHandlerChain = new MessageHandlerChain(lineMessagingClient, sessions, messageHandlers);
 		Session session = Optional.ofNullable(sessions.get(event.getSource()))
 				.map(s -> s.bind(akinatorJ))
 				.orElse(null);

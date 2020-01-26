@@ -21,7 +21,7 @@ class WinHandler implements MessageHandler {
 	public boolean acceptMessage(Session session, Event event) {
 		if (session == null) return false;
 		int step = Integer.parseInt(session.getCurrentStepInformation().getStep());
-		return session.getProgression() >= 90d || step >= 35;
+		return session.getProgression() >= 85d || step >= 35;
 	}
 
 	@Override

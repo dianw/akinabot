@@ -5,13 +5,12 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.function.Consumer;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 
-import org.codenergic.akinabot.core.ChatProvider;
-import org.codenergic.akinabot.core.MessageEvent;
 import org.codenergic.akinabot.core.QueueConfig;
 import org.codenergic.akinatorj.AkinatorJ;
 import org.codenergic.akinatorj.Session;
@@ -33,8 +32,10 @@ class TelegramBotService {
 	private final TelegramBot telegramBot;
 	private final Executor akinabotExecutor;
 	private final BlockingQueue<Update> updateQueue;
-	private final Consumer<MessageEvent> messageLogger;
 	private final List<MessageHandler> messageHandlers;
+	private final ExecutorService queueExecutor = Executors.newSingleThreadExecutor();
+
+	private boolean active = true;
 
 	TelegramBotService(AkinatorJ akinatorJ, TelegramBot telegramBot, Executor akinabotExecutor, QueueConfig queueConfig, List<MessageHandler> messageHandlers) {
 		logger.info("Initializing bot service, available message handlers: {}", messageHandlers);
@@ -43,23 +44,19 @@ class TelegramBotService {
 		this.akinabotExecutor = akinabotExecutor;
 		this.telegramBot = telegramBot;
 		this.updateQueue = queueConfig.telegramUpdateQueue();
-		this.messageLogger = queueConfig.messageLoggerQueue()::add;
 		this.messageHandlers = messageHandlers;
 	}
 
 	@PostConstruct
 	void init() {
-		Executors.newSingleThreadExecutor().submit(() -> {
-			while (true) {
+		queueExecutor.submit(() -> {
+			while (active) {
 				try {
 					Update update = updateQueue.take();
 					Message message = update.message();
 					if (message == null) continue;
 					// handle updates in pooled thread
 					akinabotExecutor.execute(() -> onUpdate(message));
-					// publish bot.message metric
-					messageLogger.accept(new MessageEvent(ChatProvider.TELEGRAM, MessageEvent.InOut.INBOUND,
-							message.chat().id().toString(), message.from().username()));
 				} catch (Exception e) {
 					logger.error(e.getMessage(), e);
 				}
@@ -67,9 +64,15 @@ class TelegramBotService {
 		});
 	}
 
+	@PreDestroy
+	void shutdown() {
+		active = false;
+		queueExecutor.shutdown();
+	}
+
 	private void onUpdate(Message message) {
 		Long chatId = message.chat().id();
-		MessageHandlerChain messageHandlerChain = new MessageHandlerChain(telegramBot, sessions, messageHandlers, messageLogger);
+		MessageHandlerChain messageHandlerChain = new MessageHandlerChain(telegramBot, sessions, messageHandlers);
 		Session session = Optional.ofNullable(sessions.get(chatId))
 				.map(s -> s.bind(akinatorJ))
 				.orElse(null);

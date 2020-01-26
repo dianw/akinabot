@@ -12,6 +12,6 @@ interface QuestionAnswerHandler extends MessageHandler {
 		if (session == null || message.text() == null
 				|| message.text().equalsIgnoreCase(AnswerButtons.QUIT.getText())) return false;
 		int step = Integer.parseInt(session.getCurrentStepInformation().getStep());
-		return session.getProgression() < 90d && step < 35;
+		return session.getProgression() < 85d && step < 35;
 	}
 }

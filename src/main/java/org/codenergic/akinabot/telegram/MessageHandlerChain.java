@@ -2,10 +2,7 @@ package org.codenergic.akinabot.telegram;
 
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 
-import org.codenergic.akinabot.core.ChatProvider;
-import org.codenergic.akinabot.core.MessageEvent;
 import org.codenergic.akinatorj.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,24 +21,20 @@ public class MessageHandlerChain {
 	private final TelegramBot telegramBot;
 	private final Map<Long, Session> sessions;
 	private final List<MessageHandler> messageHandlers;
-	private final Consumer<MessageEvent> messageLogger;
 	private int chainPosition = 0;
 	private Session currentSession;
 
-	MessageHandlerChain(TelegramBot telegramBot, Map<Long, Session> sessions, List<MessageHandler> messageHandlers, Consumer<MessageEvent> messageLogger) {
+	MessageHandlerChain(TelegramBot telegramBot, Map<Long, Session> sessions, List<MessageHandler> messageHandlers) {
 		this.telegramBot = telegramBot;
 		this.sessions = sessions;
 		this.messageHandlers = messageHandlers;
-		this.messageLogger = messageLogger;
 	}
 
 	public <T extends BaseRequest, R extends BaseResponse> R executeTelegramRequest(Chat chat, User user, BaseRequest<T, R> request) {
-		publishOutboundMessageEvent(chat.id(), user.username());
 		return telegramBot.execute(request);
 	}
 
 	public <T extends BaseRequest<T, R>, R extends BaseResponse> void executeTelegramRequest(Chat chat, User user, T request, Callback<T, R> callback) {
-		publishOutboundMessageEvent(chat.id(), user.username());
 		telegramBot.execute(request, callback);
 	}
 
@@ -63,7 +56,4 @@ public class MessageHandlerChain {
 		}
 	}
 
-	private void publishOutboundMessageEvent(Long chatId, String username) {
-		messageLogger.accept(new MessageEvent(ChatProvider.TELEGRAM, MessageEvent.InOut.OUTBOUND, chatId.toString(), username));
-	}
 }
