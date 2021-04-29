@@ -1,0 +1,36 @@
+version: 2
+updates:
+- package-ecosystem: maven
+  directory: "/"
+  schedule:
+    interval: daily
+    time: "22:00"
+  open-pull-requests-limit: 10
+  reviewers:
+  - dianw
+  assignees:
+  - dianw
+  ignore:
+  - dependency-name: org.springframework.boot:spring-boot-maven-plugin
+    versions:
+    - 2.4.2
+    - 2.4.3
+    - 2.4.4
+  - dependency-name: org.springframework.boot:spring-boot-dependencies
+    versions:
+    - 2.4.2
+    - 2.4.3
+    - 2.4.4
+  - dependency-name: com.hazelcast:hazelcast
+    versions:
+    - 4.1.1
+    - 4.1.2
+  - dependency-name: com.github.pengrad:java-telegram-bot-api
+    versions:
+    - 5.0.1
+  - dependency-name: com.squareup.okhttp3:okhttp
+    versions:
+    - 4.9.0
+  - dependency-name: com.squareup.okhttp3:logging-interceptor
+    versions:
+    - 4.9.0
